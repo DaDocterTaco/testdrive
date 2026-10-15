@@ -1,6 +1,6 @@
 # Demonstration script
 
-Target length: roughly 110 seconds. This is a recording plan; no video has been recorded by the presence of this file. Use the actual deployed release and actual hardware. If a segment does not work, omit its claim and record the limitation.
+The published release includes a [60.44-second silent software walkthrough](https://github.com/DaDocterTaco/testdrive/releases/download/v1.0.0-beta.3-offgrid/demo-browser-walkthrough.webm), with [provenance and review notes](evidence/DEMO.md). The longer outline below is a plan for an expanded, narrated recording that would add actual physical-device footage. It does not describe footage already captured. Use the deployed release and actual hardware for physical-device claims; omit any segment that has not been demonstrated.
 
 | Time | Show | Suggested narration |
 | --- | --- | --- |

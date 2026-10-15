@@ -1,0 +1,11 @@
+{
+  "testedAtUTC": "2026-10-15T01:45:47.5869988Z",
+  "method": "Anonymous PowerShell HTTPS requests without GitHub authentication",
+  "sourceStatus": 200,
+  "sourceContainsBeta3": true,
+  "releaseStatus": 200,
+  "videoStatus": 200,
+  "videoContentType": "application/octet-stream",
+  "videoContentLength": "8843559",
+  "videoURL": "https://github.com/DaDocterTaco/testdrive/releases/download/v1.0.0-beta.3-offgrid/demo-browser-walkthrough.webm"
+}

@@ -1,60 +1,69 @@
-# TESTDRIVE — Devpost draft
+# TESTDRIVE
 
-**Draft status:** Review against the deployed build before posting. This file is not a submitted Devpost entry. Replace only with real working links; do not paste placeholders into a live submission.
+**Know the device before you buy it.**
 
-## Project name
-
-TESTDRIVE
+- **Working app:** https://testdrive-offgrid-2026.web.app
+- **Public source:** https://github.com/DaDocterTaco/testdrive
+- **Release:** https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid
+- **Demo video:** https://github.com/DaDocterTaco/testdrive/releases/download/v1.0.0-beta.3-offgrid/demo-browser-walkthrough.webm
 
 ## Short description
 
-Know the device before you buy it. A browser inspection that brings available device information, guided checks, and a clear, portable report together.
+A browser inspection for computers, phones, and tablets that combines real observations, hands-on checks, exact Windows specifications, and a clear, portable report.
 
-## Inspiration and problem
+## Inspiration
 
-Buying a used laptop or phone often means trusting a short listing and a quick glance. A camera may open while another important function goes untested. Hardware descriptions may be incomplete, and a nontechnical buyer may not know which questions to ask. We wanted a focused way to inspect what a browser can access while clearly showing what remains unknown.
+A used-device listing tells a buyer what the seller says. A quick glance rarely shows which functions actually work, which have not been tested, or whether the advertised specifications match a system report. TESTDRIVE makes that inspection understandable and keeps its limits visible.
 
 ## What it does
 
-TESTDRIVE guides an inspection on the device being checked. It separates browser-reported information, measured events, imported specifications, and human judgement. Users can select appropriate hands-on checks, add supported Windows specifications locally, and keep a portable inspection record. Untested features stay visibly untested.
+Open TESTDRIVE on the device being inspected, correct its suggested device type if needed, and choose the relevant checks. A quick scan collects available browser information and runs short processing and graphics samples. Guided checks cover keyboard, pointer, touch, camera, microphone, speakers, and display.
 
-Retain the preceding paragraph only for features verified in the release. A report cannot certify ownership, establish that an imported report is authentic, or rule out every hardware fault.
+The app distinguishes browser-reported hints, measured events, imported specifications, and human answers. An English Windows System Information text report can be imported locally, previewed, and compared with specific seller claims about installed memory or processor model. A browser memory hint is never treated as exact installed RAM.
 
-## How we built it
+The final report organizes observations, attention items, unknown areas, notes, and next steps. Inspections stay in browser storage and can be resumed, deleted, exported/imported as versioned JSON, or printed using the browser's Print / Save PDF service. No account is required.
 
-The app uses React, TypeScript, and Vite. Its inspection model separates test attempts from presentation, and its report keeps the source of observations visible. Browser APIs power capability detection, bounded workloads, input interactions, and consent-based camera/microphone checks. A local parser reads supported English Windows System Information exports. Firebase Hosting serves the static app; user inspections and temporary media are not sent to an app database. GitHub Actions checks the source and production build.
+## How it was built
 
-Before publication, verify deployment and CI status in the release ledger. Configuration and source files exist before a first successful hosted release or GitHub Actions run.
+React and TypeScript provide the adaptive interface, with Vite producing a static application. A separate diagnostic registry and attempt model preserve sources, execution states, and test versions. A bounded background worker verifies a deterministic processing workload; WebGL renders a known scene and checks an actual read-back pixel. Pointer, keyboard, touch, media, and Web Audio APIs support the guided interactions.
 
-**Disclosure:** OpenAI Codex with specialist coding agents assisted development, verification, and release preparation. These agents are AI development tools and are not human team members. React, Vite, TypeScript, Lucide, Zod, and testing tools are third-party foundations; see the repository's notices. Device diagnostics is an existing category. Our contribution is this application, workflow, implementation, and reporting approach developed for the event.
+Native TypeScript validation checks imported record versions, field allowlists, limits, and malformed content. The local Windows parser retains only supported hardware fields and excludes raw reports, serials, usernames, network details, and paths. IndexedDB persistence falls back visibly to memory when storage is unavailable. Media is temporary and released when the person leaves a test.
+
+Firebase Hosting serves the public HTTPS app. Inspection data is not uploaded to an application database. Self-hosted fonts and a same-origin content policy keep runtime assets local. GitHub Actions performs a reproducible installation, typecheck, lint, 21 unit tests, production build, and seven desktop/mobile-viewport browser scenarios.
 
 ## Challenges
 
-Browsers intentionally limit hardware information and vary in their APIs and permissions. The product must avoid turning “not accessible” into “broken” or “passed.” We designed source labels and incomplete states to make those limits useful and understandable. Exact specifications use a local, reviewable system-report import rather than a fabricated browser guess.
+Browser hardware access is intentionally limited and differs across devices. An unavailable API, a denied permission, a missing event, and an observed problem must not collapse into the same result. TESTDRIVE preserves those distinctions rather than producing an unsupported health score.
+
+Exact specifications create another challenge: a report is user-supplied, and similar-looking memory or processor descriptions may not be equivalent. The import preview, source labels, cautious normalization, explicit units, and insufficient-information state help keep comparisons honest.
 
 ## Accomplishments
 
-Replace this section with verified release outcomes from `docs/verification.md`. Suitable evidence is a complete inspection/report loop, an observed input/media check, a tested report parser, working portable exports, or a public deployment. Do not describe intended behavior as an accomplishment.
+- A published inspection-to-report workflow with ten implemented check modules and no sign-up requirement.
+- Source-aware Windows specification import and seller-claim comparison demonstrated with labeled synthetic data.
+- Partial guided-progress recovery, permission-denial handling, storage fallback, portable reports, and local deletion.
+- Passing typecheck, lint, 21 unit tests, production build, and all seven public browser scenarios, plus production HTTPS/content-policy checks.
+- Labeled desktop and mobile-viewport evidence that distinguishes software testing from physical-device verification.
+- A publicly available 60-second silent browser walkthrough with explicit synthetic-data and software-input labels.
 
-## What we learned
+## What was learned
 
-A useful inspection record needs explicit boundaries as much as successful checks. Human confirmations, browser hints, and locally imported fields answer different questions. Keeping those distinctions visible helps users decide what to recheck or ask a seller to demonstrate.
+An inspection becomes more useful when it explains uncertainty clearly. Browser hints, actual events, human judgement, and imported fields answer different questions. Preserving their sources and untested areas gives a buyer a better next question to ask, without pretending that a website can certify a device.
 
 ## What's next
 
-Expand physical-device verification and accessibility testing, add additional supported system-report formats, and explore consent-based paired-device viewing. Accounts, shop workflows, and sharing require a future privacy and product review; they are not necessary for a useful local inspection.
+Expand physical-device verification and accessibility coverage, support additional operating-system and battery reports, and explore consent-based paired viewing. Shop workflows and cloud sharing require a separate privacy and product design phase. They are not necessary for a useful local inspection.
 
-## Stack
+## Limitations
 
-React; TypeScript; Vite; browser media/input APIs; Firebase Hosting; GitHub Actions; Vitest; Playwright; Lucide; Zod; OpenAI Codex. Remove tools or APIs not actually used in the final release.
+Physical iPhone/Safari behavior and real camera/microphone/input quality have not been independently verified. Mobile evidence uses Chromium viewport emulation with synthetic events. Browser checks cannot prove ownership, authenticate an imported report, certify hardware condition, measure every internal component, or guarantee a good purchase. Battery wear and disk health remain unchecked. Timing reflects the browser and current environment. No paired-device relay, account system, or cloud report sync is included.
 
-## Links and final review
+## Technology and attribution
 
-- App: use the verified public HTTPS deployment from the ledger.
-- Source: use the actual public repository from the ledger.
-- Video: record/upload and verify actual playback; no video is implied by this draft.
-- Screenshots: use sanitized captures from the deployed release.
-- Participant declarations: the human participant must confirm eligibility and team details.
-- Submission: verify the event form's submitted state and record a timestamp, not merely saved text.
+React, TypeScript, Vite, React Router, Lucide, browser workers, WebGL, media/input/Web Audio APIs, IndexedDB, Firebase Hosting, GitHub Actions, Vitest, Playwright, ESLint, and Prettier. DM Sans and Manrope are self-hosted under the SIL Open Font License.
 
-Known limitations and tested-device coverage must match `docs/supported-devices.md` and the release ledger. The source specification records the original hard deadline as October 15, 2026, 12:00 a.m. EDT; check the official schedule/form before attempting submission.
+OpenAI Codex and specialist coding agents assisted architecture, interface design, implementation, testing, infrastructure, and documentation. They are AI development tools, not human participants. Device diagnostics is an existing category; this project's contribution is its own application, workflow, parsing/comparison logic, evidence-aware reporting, and integration. Third-party foundations retain their licenses and are documented in the public source.
+
+## Submission status
+
+The application and source are public. This draft is not a Devpost submission, and no submitted-state confirmation or participant declaration has been recorded.

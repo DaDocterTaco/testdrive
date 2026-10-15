@@ -2,14 +2,14 @@
 
 TESTDRIVE application code is distributed under the MIT license in `LICENSE`. Dependencies retain their original licenses. The committed lockfile is the authority for exact dependency versions. Distributed package license files remain available in installed package directories. This summary does not replace those licenses.
 
-## Direct runtime foundations
+## Installed direct dependencies
 
 | Package | Role | License |
 | --- | --- | --- |
 | React and React DOM 19.3.1 | Application rendering | MIT |
 | React Router DOM 7.18.4 | Client navigation | MIT |
 | Lucide React 0.468.0 | Interface icons | ISC |
-| Zod 4.6.7 | Structured data validation | MIT |
+| Zod 4.6.7 | Installed dependency; beta record validation uses native TypeScript checks | MIT |
 
 ## Build and verification tools
 

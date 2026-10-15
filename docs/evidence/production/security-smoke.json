@@ -1,0 +1,47 @@
+{
+  "testedAtUTC": "2026-10-15T01:40:27.854Z",
+  "url": "https://testdrive-offgrid-2026.web.app",
+  "appVersion": "1.0.0-beta.3",
+  "browser": "Chromium 156.0.8078.4",
+  "scope": "Production HTTPS software smoke; no physical hardware validation.",
+  "statuses": [
+    {
+      "route": "/",
+      "status": 200
+    },
+    {
+      "route": "/tests",
+      "status": 200
+    },
+    {
+      "route": "/reports",
+      "status": 200
+    },
+    {
+      "route": "/about",
+      "status": 200
+    },
+    {
+      "route": "/privacy",
+      "status": 200
+    },
+    {
+      "route": "/inspect/missing-synthetic/setup",
+      "status": 200
+    },
+    {
+      "route": "/reports/missing-synthetic",
+      "status": 200
+    }
+  ],
+  "freshReload": 200,
+  "automaticScanObservedChecks": 3,
+  "requestOrigins": [
+    "https://testdrive-offgrid-2026.web.app"
+  ],
+  "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+  "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
+  "cspViolations": [],
+  "failedRequests": [],
+  "browserErrors": []
+}

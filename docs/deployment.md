@@ -11,6 +11,8 @@ The dedicated Google Cloud/Firebase project and default Hosting site were create
 
 An assigned address is not proof of a deployed application. See [verification.md](verification.md) for the most recent actual deployment and smoke test. Firebase Hosting was selected because the user explicitly requested it; this supersedes the specification's preferred Cloudflare plan. No billable service or billing account was configured for TESTDRIVE by this build.
 
+The published beta is `1.0.0-beta.3`, implementation commit `d7eea4973711164ee758c70eacab9e383b921fdc` and immutable tag `v1.0.0-beta.3-offgrid`. The deploy message includes this identity. Its public JavaScript and CSS hashes were checked against the local production build. Later documentation/evidence commits do not alter the source tag or deployed bundle.
+
 ## Reproducible deployment
 
 Install the Firebase CLI as documented in the [official CLI guide](https://firebase.google.com/docs/cli). Authenticate using your own account with access to the project. Credentials belong outside this repository.

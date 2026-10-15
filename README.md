@@ -8,9 +8,10 @@ This repository is the implementation for HACK47: OFFGRID, October 2026. See [th
 
 ## Release access
 
-- Firebase project and Hosting site: `testdrive-offgrid-2026` (created).
-- Assigned Hosting URL: https://testdrive-offgrid-2026.web.app — production deployment verification is recorded in [verification.md](docs/verification.md).
-- GitHub repository: [DaDocterTaco/testdrive](https://github.com/DaDocterTaco/testdrive) (created; initial source push is tracked in the verification record).
+- [Live app](https://testdrive-offgrid-2026.web.app) — Firebase Hosting, beta `1.0.0-beta.3`.
+- [Public source](https://github.com/DaDocterTaco/testdrive) and [immutable beta 3 source tag](https://github.com/DaDocterTaco/testdrive/tree/v1.0.0-beta.3-offgrid).
+- [Verified CI run](https://github.com/DaDocterTaco/testdrive/actions/runs/38666848119) — reproducible install, typecheck, lint, 21 unit tests, production build, and 7 desktop/mobile-viewport scenarios passed.
+- [Release and demonstration](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid) — a 60-second silent walkthrough using clearly labeled synthetic data and software inputs.
 - Demo recording and Devpost submission status are tracked in the verification record. Do not infer submission from the presence of this repository.
 
 ## Develop
@@ -37,6 +38,8 @@ npm run preview
 ## Product behavior
 
 The implementation centers on a local inspection workflow: choose a device class and purpose, collect capability-aware browser information, run bounded quick checks, complete applicable guided tests, optionally import exact Windows specifications, and review/export a source-aware report. Specific checks and their current evidence are listed in [supported-devices.md](docs/supported-devices.md).
+
+The public app passed all seven workflow scenarios, HTTP/content-policy checks, and a seven-page browser-PDF render review. Windows Chromium automation and mobile viewport emulation exercise the interface; a physical iPhone, real camera/microphone quality, and physical input hardware have not been independently verified. Run the relevant checks on the actual device and read the report's limitations.
 
 Browser observations cannot establish exact installed RAM, complete storage capacity, disk health, battery wear, ownership, authenticity, or the absence of hidden faults. Imported specifications describe the selected file; they are not independently authenticated. Workload timing reflects the browser and current environment, not a universal hardware score. Human observations remain labeled as human observations.
 

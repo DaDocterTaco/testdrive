@@ -197,12 +197,15 @@ try {
   assert.deepEqual(errors, []);
   completed = true;
 } finally {
-  await context.close();
-  await browser.close();
+  try {
+    await context.close();
+    if (completed) await video.saveAs(output);
+  } finally {
+    await browser.close();
+  }
 }
 
 if (completed) {
-  await video.saveAs(output);
   const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
   await writeFile(path.resolve('docs/evidence/DEMO.md'), `# Silent browser walkthrough\n\n- Recording: [demo-browser-walkthrough.webm](demo-browser-walkthrough.webm)\n- Captured: ${recordedAt}\n- App origin: ${base}\n- Format: silent WebM, 1440 × 960, approximately ${elapsedSeconds} seconds.\n- Runner: \`node scripts/record-demo.mjs\` (optional \`TD_DEMO_URL\` environment variable).\n\nThis is a real isolated Chromium browser recording of TESTDRIVE. A narrow provenance banner annotates the UI; the runner does not replace app results or page screens. The sequence starts an inspection, performs the actual quick scan, sends keyboard events through Playwright, advances display patterns with their actual controls, imports the repository's explicitly synthetic Windows fixture, compares a synthetic 16 GB seller claim against its 8 GB imported memory, creates a report, and downloads its JSON through the real export button. The Print / Save PDF control is shown; no native print dialog is opened.\n\nThe inspection is named “${nickname}”. Imported specifications and seller claims are synthetic and describe no physical device. The demo checks the import confirmation only to exercise the software workflow with that fixture. Keyboard and display answers are recorded as **Not sure** with explanatory notes; no person confirmed physical hardware quality. The automated key events are browser input events, not proof of working physical keys. Rendering a display pattern is not proof of a healthy panel. Remaining guided checks remain untested. The browser's quick-scan observations describe only the automated browser session. No personal browser profile, real camera, microphone, or existing inspection data is used.\n\nThis artifact is a software demonstration, not a physical device test, hardware certification, or evidence of real iPhone/Safari testing. It is kept in the local workspace and is not published by the recording script.\n`);
   console.log(`Saved ${output} (${elapsedSeconds}s workflow wall time).`);

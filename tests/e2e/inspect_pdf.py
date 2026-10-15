@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 import pdfplumber
@@ -15,7 +16,7 @@ poppler = Path(sys.argv[2]).resolve()
 target = pdf.parent / "pdf-pages"
 target.mkdir(parents=True, exist_ok=True)
 reader = PdfReader(pdf)
-texts = [page.extract_text() or "" for page in reader.pages]
+texts = [unicodedata.normalize("NFKC", page.extract_text() or "") for page in reader.pages]
 text = "\n".join(texts)
 required = ["Synthetic buyer example", "16 GB", "8.00 GB", "Inspection findings", "What this report means", "Device profile", "Keyboard", "Display"]
 for expected in required:

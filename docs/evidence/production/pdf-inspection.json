@@ -1,0 +1,100 @@
+{
+  "artifact": "synthetic-browser-print-software-test.pdf",
+  "scope": "Synthetic Chromium page.pdf software output, not an operating-system print-dialog or physical print test.",
+  "pages": 7,
+  "requiredContentPresent": [
+    "Synthetic buyer example",
+    "16 GB",
+    "8.00 GB",
+    "Inspection findings",
+    "What this report means",
+    "Device profile",
+    "Keyboard",
+    "Display"
+  ],
+  "printControlsAbsent": true,
+  "noBlankPages": true,
+  "textWithinPageBounds": true,
+  "pageRecords": [
+    {
+      "page": 1,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 147,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation TESTDRIVE INSPECTION REPORT Inspection recorded Synthetic",
+      "lastWords": "or generalized. Browser Chrome Browser-reported Reported family only; privacy settings may change this information. Page 1 of 7"
+    },
+    {
+      "page": 2,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 230,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Suggested device type computer Browser-reported A",
+      "lastWords": "in this session. No cross- device score or hardware-health judgement. Verified checksum 934658367 Measured Page 2 of 7"
+    },
+    {
+      "page": 3,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 218,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Warmup policy One unmeasured block of",
+      "lastWords": "11 recorded observations Selected layout ansi User-provided Distinct physical key codes received 3 Measured Page 3 of 7"
+    },
+    {
+      "page": 4,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 171,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Distinct key values without physical codes",
+      "lastWords": "unknown. Speakers Not checked This check has not been run. Its condition remains unknown. Page 4 of 7"
+    },
+    {
+      "page": 5,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 184,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Display You confirmed The app rendered",
+      "lastWords": "Reported touch points 10 Browser-reported Capability hint; this is not a tested simultaneous-touch count. Page 5 of 7"
+    },
+    {
+      "page": 6,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 229,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Available logical processors 16 Browser-reported The",
+      "lastWords": "verification. Physical storage capacity and battery wear: not checked. Browser hints are qualified observations. Page 6 of 7"
+    },
+    {
+      "page": 7,
+      "widthPoints": 594.95996,
+      "heightPoints": 841.91998,
+      "words": 137,
+      "topPoints": 15.52,
+      "bottomPoints": 827.02,
+      "firstWords": "TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation Seller claim comparison Difference to check",
+      "lastWords": "are not proof of authenticity. This is an inspection record, not a device certification. Page 7 of 7"
+    }
+  ],
+  "visualReview": {
+    "reviewed": true,
+    "readable": true,
+    "clippedOrOverlappingTextObserved": false,
+    "orphanResultsHeadingObserved": false,
+    "splitFactRowsObserved": false,
+    "status": "PASS: all seven rendered pages visually inspected; full evidence spans seven A4 pages."
+  },
+  "appVersion": "1.0.0-beta.3",
+  "implementationCommit": "d7eea4973711164ee758c70eacab9e383b921fdc"
+}

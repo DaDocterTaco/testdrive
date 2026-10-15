@@ -42,8 +42,11 @@ R1 paired viewing, QR relay, macOS import, Windows battery-report import, motion
 | Environment | Evidence | Status |
 | --- | --- | --- |
 | Node.js 24.15.0 / npm 11.6.1 on Windows | Runtime versions inspected during setup | Verified environment only |
-| Desktop browser automation | Pending; record exact browser/version and results in verification.md | Not yet recorded |
-| Mobile viewport emulation | Pending; does not validate an iPhone touchscreen/camera | Not yet recorded |
+| Windows Chromium 156.0.8078.4 (Playwright build1248) | Seven local desktop/mobile software scenarios and final focused keyboard-fallback regression; CI repeated seven successfully on Ubuntu | Verified software behavior |
+| Mobile viewport emulation | iPhone13 dimensions390×844 and320px width; synthetic touch and report, no overflow in tested paths | Verified emulation; no physical iPhone claim |
+| Public Firebase HTTPS | App/deep routes200; absent JS404; security/cache/content types | Verified HTTP configuration |
+| Public beta 3 browser workflow | Seven scenarios passed; automatic worker/WebGL observations under CSP; only same-origin requests with zero policy/console/page failures | Verified software behavior |
+| Browser print output | Seven-page A4 synthetic PDF and all seven page renders visually inspected, without clipping/overlap/orphan heading/split fact rows | Verified Chromium PDF rendering; OS print dialog and physical printer not tested |
 | Physical Windows keyboard/pointer/camera/microphone | Requires real interaction | Not yet verified |
 | Physical iPhone/Safari | No physical-device test recorded | Not yet verified |
 | Other physical devices | No evidence recorded | Not yet verified |
