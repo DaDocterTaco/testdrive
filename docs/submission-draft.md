@@ -1,5 +1,7 @@
 # TESTDRIVE
 
+This draft describes the earlier beta3 delivery and its historical demonstration. The later 1.1 usability release adds eleven-check coverage, a laptop keyboard catalog and guided automation; see [current release notes](RELEASE_NOTES.md). This draft has not been submitted by the development tools.
+
 **Know the device before you buy it.**
 
 - **Working app:** https://testdrive-offgrid-2026.web.app

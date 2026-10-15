@@ -10,10 +10,10 @@ This repository is the implementation for HACK47: OFFGRID, October 2026. See [th
 
 ## Release access
 
-- [Live app](https://testdrive-offgrid-2026.web.app) — Firebase Hosting, beta `1.0.0-beta.3`.
-- [Public source](https://github.com/DaDocterTaco/testdrive) and [immutable beta 3 source tag](https://github.com/DaDocterTaco/testdrive/tree/v1.0.0-beta.3-offgrid).
-- [Verified CI run](https://github.com/DaDocterTaco/testdrive/actions/runs/38666848119) — reproducible install, typecheck, lint, 21 unit tests, production build, and 7 desktop/mobile-viewport scenarios passed.
-- [Release and demonstration](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid) — a 60-second silent walkthrough using clearly labeled synthetic data and software inputs.
+- [Live app](https://testdrive-offgrid-2026.web.app) — Firebase Hosting, beta `1.1.0-beta.2`.
+- [Public source](https://github.com/DaDocterTaco/testdrive) and [immutable 1.1 source tag](https://github.com/DaDocterTaco/testdrive/tree/v1.1.0-beta.2).
+- [Release verification CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38672436016) — reproducible install, typecheck, lint, 36 unit tests, production build, and 17 desktop/mobile-viewport scenarios.
+- [Current release notes](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.1.0-beta.2). The [earlier beta 3 demonstration](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid) is historical and does not show the 1.1 update.
 - Demo recording and Devpost submission status are tracked in the verification record. Do not infer submission from the presence of this repository.
 
 ## Develop
@@ -41,7 +41,7 @@ npm run preview
 
 One click starts a local inspection and runs the available automatic scan. The app then guides one task at a time and advances to the next check after saving. Device class, keyboard profile and the inspection plan remain editable. Imported model identifiers can choose one of four documented US keyboard references, and a remembered manual choice stays labeled as a preference. Camera and microphone samples finish automatically; optional human feedback covers clarity and quality. Specific checks and their evidence are listed in [supported-devices.md](docs/supported-devices.md).
 
-The public app passed all seven workflow scenarios, HTTP/content-policy checks, and a seven-page browser-PDF render review. Windows Chromium automation and mobile viewport emulation exercise the interface; a physical iPhone, real camera/microphone quality, and physical input hardware have not been independently verified. Run the relevant checks on the actual device and read the report's limitations.
+The 1.1 release is covered by 17 browser workflows and public HTTP/content-policy checks, including report export/import and print CSS. The earlier beta 3 release also received a seven-page browser-PDF render review; that PDF remains historical evidence. Windows Chromium automation and mobile viewport emulation exercise the interface; a physical iPhone, real camera/microphone quality, and physical input hardware have not been independently verified. Run the relevant checks on the actual device and read the report's limitations.
 
 Browser observations cannot establish an exact laptop model, exact installed RAM, complete storage capacity, disk health, battery wear, ownership, authenticity, or the absence of hidden faults. Imported specifications describe the selected file; they are not independently authenticated. Catalog details do not establish a particular device's configuration. Keyboard capture suppresses only events delivered to the browser; OS-reserved shortcuts may still open. Word matching requires installed on-device speech support; ordinary audio detection does not claim to recognize speech. Workload timing reflects the browser and current environment, not a universal hardware score. Human observations remain labeled as human observations.
 

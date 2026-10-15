@@ -1,111 +1,59 @@
 {
-  "testedAtUTC": "2026-10-15T01:40:49.8135519Z",
-  "sourceCommit": "d7eea4973711164ee758c70eacab9e383b921fdc",
-  "appVersion": "1.0.0-beta.3",
-  "url": "https://testdrive-offgrid-2026.web.app",
-  "scope": "HTTP and artifact identity verification; no physical-device claims",
-  "responses": [
+  "testedAtUTC": "2026-10-15T02:40:46.855Z",
+  "origin": "https://testdrive-offgrid-2026.web.app",
+  "version": "1.1.0-beta.2",
+  "implementation": "7521b81ff9584d64bb0d241629ea3923147e916e",
+  "scope": "Production HTTP and exact static artifact verification; no physical hardware validation.",
+  "results": [
     {
-      "path": "/",
+      "route": "/",
       "status": 200,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/tests",
+      "route": "/tests",
       "status": 200,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/reports",
+      "route": "/reports",
       "status": 200,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/privacy",
+      "route": "/privacy",
       "status": 200,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/inspect/not-a-real-inspection/setup",
+      "route": "/inspect/synthetic-missing/test/KEY-01",
       "status": 200,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/assets/does-not-exist.js",
+      "route": "/assets/does-not-exist.js",
       "status": 404,
-      "contentType": "text/html; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/html; charset=utf-8",
+      "cacheControl": "no-cache"
     },
     {
-      "path": "/fonts/fonts.css",
+      "route": "/assets/index-CWpDB626.js",
       "status": 200,
-      "contentType": "text/css; charset=utf-8",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
+      "type": "text/javascript; charset=utf-8",
+      "cacheControl": "public,max-age=31536000,immutable",
+      "sha256": "83c26d33c627f83146dd3dfde72d37c5bf5f7173634f11f2992192b15706733e"
     },
     {
-      "path": "/favicon.svg",
+      "route": "/assets/index-BIyFpMhC.css",
       "status": 200,
-      "contentType": "image/svg+xml",
-      "cacheControl": "no-cache",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
-    },
-    {
-      "path": "/assets/index-boF5AmZl.js",
-      "status": 200,
-      "contentType": "text/javascript; charset=utf-8",
-      "cacheControl": "public, max-age=31536000, immutable",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
-    },
-    {
-      "path": "/assets/index-DyN0cqvy.css",
-      "status": 200,
-      "contentType": "text/css; charset=utf-8",
-      "cacheControl": "public, max-age=31536000, immutable",
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      "permissionsPolicy": "camera=(self), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=(), serial=(), accelerometer=(), gyroscope=(), magnetometer=()",
-      "nosniff": "nosniff"
-    }
-  ],
-  "assets": [
-    {
-      "path": "/assets/index-boF5AmZl.js",
-      "sha256": "84A857259F7DE9B646374BBA89457E83E363CDF4356E88C142BE3A78B1AF56EA",
-      "matchesLocalBuild": true
-    },
-    {
-      "path": "/assets/index-DyN0cqvy.css",
-      "sha256": "51A3C496229D73762B3746167EF168058B9C20A5E10971DB7BEB0E0A52D37077",
-      "matchesLocalBuild": true
+      "type": "text/css; charset=utf-8",
+      "cacheControl": "public,max-age=31536000,immutable",
+      "sha256": "49e8d8fa27dc634712332b5d41f8c5e9b21be191ff05f7fc7e5e1294e4c934fa"
     }
   ]
 }

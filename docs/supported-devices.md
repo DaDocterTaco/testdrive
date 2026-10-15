@@ -42,6 +42,8 @@ R1 paired viewing, QR relay, macOS import, Windows battery-report import, motion
 
 ## Actual verification matrix
 
+The 1.1.0-beta.2 release passed 36 unit tests and all 17 public HTTPS browser workflows using full Chromium, including synthetic media, source-change reset, line-based wheel input, model matching/preferences and deletion. The earlier beta3 PDF and screenshots listed below remain historical where identified as beta3. The complete current record is in [verification.md](verification.md).
+
 | Environment                                          | Evidence                                                                                                                                | Status                                                                           |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | Node.js 24.15.0 / npm 11.6.1 on Windows              | Runtime versions inspected during setup                                                                                                 | Verified environment only                                                        |

@@ -1,5 +1,7 @@
 # Release checklist
 
+This checklist records the original beta3/event delivery. The later 1.1 usability update and its 36 unit tests, 17 public browser workflows, current deployment/tag and CI are recorded in [verification.md](verification.md) and [RELEASE_NOTES.md](RELEASE_NOTES.md).
+
 Use [verification.md](verification.md) for evidence. Empty boxes are unfinished work. Deadline in the planning baseline: **October 15, 2026, 12:00 a.m. EDT** (midnight ending October 14). Recheck the official event form before assuming submissions remain open.
 
 ## Code and privacy
