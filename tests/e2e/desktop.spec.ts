@@ -52,7 +52,7 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
     "released",
   );
   await expect(
-    page.getByText(/core keys still need a press and release/),
+    page.getByText("key responses pressed + released", { exact: true }),
   ).toBeVisible();
   await assess(page, "Looks / sounds right");
   await evidence(
@@ -134,10 +134,12 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
     keyboardAttempt.facts.find((f) => f.key === "keyboard.distinct")?.value,
   ).toBe(3);
   expect(
-    Number(
-      keyboardAttempt.facts.find((f) => f.key === "keyboard.untested")?.value,
-    ),
-  ).toBeGreaterThan(0);
+    keyboardAttempt.facts.find((f) => f.key === "keyboard.response_count")
+      ?.value,
+  ).toBe(3);
+  expect(
+    keyboardAttempt.facts.find((f) => f.key === "keyboard.untested"),
+  ).toBeUndefined();
   expect(
     keyboardAttempt.facts.filter((f) => f.key.startsWith("keyboard.key.")),
   ).toHaveLength(3);
