@@ -12,7 +12,7 @@ Firebase deployed implementation `5f50eddb1dda4737bad50f683cd569eb977e1ae5`, imm
 
 All nine affected production HTTPS workflows passed in 50.4 seconds: three responsive sizes, absent browser readings, scan stop/retry/navigation cancellation, complete mobile lifecycle, native and fallback touch exits, and microphone phrase visibility. Final screenshots and machine-readable security/HTTP evidence are in `docs/evidence/production`. The release contains no uploaded assets. The intentionally excluded local demo edits and design directory remain preserved outside this release.
 
-At 03:35 UTC, CI had passed reproducible install, typecheck, lint, all 40 unit tests, build and browser installation; its complete 27-case browser run was still in progress. This record does not claim a final CI result before that run completes.
+[Final CI run 38676846105](https://github.com/DaDocterTaco/testdrive/actions/runs/38676846105) completed successfully for the deployed implementation: reproducible install, typecheck, lint, all 40 unit tests, production build and the complete 27-case Chromium browser suite.
 
 ## 1.1.0-beta.4 unknown-keyboard confirmation
 
