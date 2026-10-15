@@ -803,7 +803,7 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
       speechState,
     ],
   );
-  async function start() {
+  function archiveSample() {
     if (inputObserved || duration > 0 || peak > 0)
       setHistory((old) =>
         [
@@ -816,11 +816,15 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
           ),
         ].slice(-20),
       );
+  }
+  function resetSample(opening: boolean) {
     dispose(false);
     releaseUrl();
     setPlayback("");
     setPlayed(false);
-    setBusy(true);
+    setBusy(opening);
+    setRunning(false);
+    setRecording(false);
     setNotice("");
     setFailure({});
     setDuration(0);
@@ -837,6 +841,10 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
     setTotalSamples(0);
     setSpeechState("not_started");
     sampleStarted.current = 0;
+  }
+  async function start() {
+    archiveSample();
+    resetSample(true);
     if (!available()) {
       setBusy(false);
       setNotice(
@@ -1157,8 +1165,15 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
             Microphone source{" "}
             <select
               value={selected}
-              disabled={running}
-              onChange={(e) => setSelected(e.target.value)}
+              disabled={running || busy}
+              onChange={(e) => {
+                archiveSample();
+                resetSample(false);
+                setSelected(e.target.value);
+                setNotice(
+                  "New microphone selected. Choose Start microphone sample to test this input.",
+                );
+              }}
             >
               <option value="">Default microphone</option>
               {sources.map((s, i) => (

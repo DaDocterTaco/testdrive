@@ -145,7 +145,16 @@ export function PointerTest({ onChange }: ModuleProps) {
     const wheel = (e: WheelEvent) => {
       if (!state.current.active || e.ctrlKey) return;
       e.preventDefault();
-      if (Math.abs(e.deltaY) < 8) return;
+      // Wheel values can be pixels, text lines (notably Firefox), or pages.
+      // Convert to a comparable UI distance before applying the jitter gate.
+      const delta =
+        e.deltaY *
+        (e.deltaMode === 1
+          ? 16
+          : e.deltaMode === 2
+            ? Math.max(1, el.clientHeight)
+            : 1);
+      if (Math.abs(delta) < 8) return;
       setClicks((c) => ({
         ...c,
         wheel: c.wheel + 1,

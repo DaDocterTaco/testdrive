@@ -182,7 +182,14 @@ test("pointer challenge automatically verifies each required action and excludes
   await expect(surface).toHaveAttribute("data-step", "secondary");
   await page.mouse.click(center.x, center.y, { button: "right" });
   await expect(surface).toHaveAttribute("data-step", "scroll-down");
-  await page.mouse.wheel(0, 120);
+  await page.mouse.wheel(0, 3);
+  await expect(surface).toHaveAttribute("data-step", "scroll-down");
+  await surface.dispatchEvent("wheel", {
+    deltaY: 3,
+    deltaMode: 1,
+    bubbles: true,
+    cancelable: true,
+  });
   await expect(surface).toHaveAttribute("data-step", "scroll-up");
   await page.mouse.wheel(0, -120);
   await expect(surface).toHaveAttribute("data-step", "drag");
@@ -281,6 +288,7 @@ test("camera and microphone automatically analyze bounded synthetic streams and 
     const state = window as Window & {
       qaAudioContext?: AudioContext;
       qaMicrophone?: MediaStream;
+      qaMicrophoneCalls?: number;
     };
     const context = new AudioContext();
     state.qaAudioContext = context;
@@ -293,9 +301,29 @@ test("camera and microphone automatically analyze bounded synthetic streams and 
     oscillator.start();
     void context.resume();
     state.qaMicrophone = destination.stream;
+    state.qaMicrophoneCalls = 0;
+    Object.defineProperty(navigator.mediaDevices, "enumerateDevices", {
+      configurable: true,
+      value: async () => [
+        {
+          deviceId: "synthetic-second-mic",
+          kind: "audioinput",
+          label: "Synthetic second microphone",
+          groupId: "software-test",
+          toJSON: () => ({}),
+        },
+      ],
+    });
     Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
       configurable: true,
-      value: async () => destination.stream,
+      value: async () => {
+        state.qaMicrophoneCalls!++;
+        if (state.qaMicrophoneCalls === 1) return destination.stream;
+        const next = context.createMediaStreamDestination();
+        gain.connect(next);
+        state.qaMicrophone = next.stream;
+        return next.stream;
+      },
     });
   });
   await expect(
@@ -316,6 +344,44 @@ test("camera and microphone automatically analyze bounded synthetic streams and 
       { timeout: 12_000 },
     )
     .toBe("ended");
+  await page.getByText("Use a different microphone", { exact: true }).click();
+  await page
+    .getByLabel("Microphone source")
+    .selectOption("synthetic-second-mic");
+  await expect(
+    page.getByRole("button", { name: /^Save & (?:next check|review)/ }),
+  ).toBeDisabled();
+  await expect(page.locator("audio")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Start microphone sample", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as Window & { qaMicrophoneCalls?: number }).qaMicrophoneCalls,
+    ),
+  ).toBe(1);
+  await page
+    .getByRole("button", { name: "Start microphone sample", exact: true })
+    .click();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            (
+              window as Window & { qaMicrophone?: MediaStream }
+            ).qaMicrophone!.getTracks()[0].readyState,
+        ),
+      { timeout: 12_000 },
+    )
+    .toBe("ended");
+  expect(
+    await page.evaluate(
+      () =>
+        (window as Window & { qaMicrophoneCalls?: number }).qaMicrophoneCalls,
+    ),
+  ).toBe(2);
   await page.evaluate(() =>
     (
       window as Window & { qaAudioContext?: AudioContext }

@@ -1,4 +1,4 @@
-# TESTDRIVE 1.1.0-beta.1
+# TESTDRIVE 1.1.0-beta.2
 
 This update makes an inspection easier to start and completes more checks from observed input. One click starts the automatic scan; saving a result takes the user to the next pending check.
 
