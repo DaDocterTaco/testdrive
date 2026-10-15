@@ -34,7 +34,7 @@ try {
   assert.match(await page.locator('main').innerText(), /This report isn’t saved in this browser/);
   await page.goto(`${origin}/`);
   await page.getByRole('button', { name:'Start inspection', exact:true }).click();
-  await page.getByText('Your quick scan is saved.', { exact:true }).waitFor();
+  await page.getByText('Your device overview is ready.', { exact:true }).waitFor();
   assert.equal(await page.locator('.scan-task .status').allTextContents().then(values => values.filter(value => value === 'Observed').length), 3, 'All three supported automatic checks must observe real browser work on this Chromium run.');
   violations.push(...await page.evaluate(() => window.__testdriveSecurityViolations));
   const csp = headers['content-security-policy'];

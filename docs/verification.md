@@ -2,6 +2,12 @@
 
 This file records actual evidence. Checklists and intended behavior are not test results.
 
+## 1.2.0-beta.1 responsive UX release
+
+The final candidate passed `npm run check`: TypeScript, ESLint, all 40 unit tests and the production build. The full integration run passed 24 of 25 workflows and caught native fullscreen exit focus. After fixing focus and compacting tablet cards, all eight affected responsive, cancellation and touchscreen scenarios passed in 44.4 seconds. The final mobile microphone instruction visibility fix and desktop camera/microphone scenario passed together in 38.9 seconds. The suite now has 27 workflows. Unchanged earlier scenarios retain their full-run results; CI repeats the entire suite on the release source.
+
+New checks cover desktop 1440, tablet 768 and mobile 390 layouts, valid and unavailable battery/browser quota readings, stopped scan/retry/navigation cancellation, native and fallback fullscreen touch with actual browser touch events, mouse exclusion, retained coverage, Exit/Escape and focus restoration. The device-profile unit tests also cover rejected, invalid and never-settling APIs. Design comparison and resolved findings are documented in [design-qa.md](../design-qa.md). Screenshots are browser/software evidence; no physical panel or media-quality pass is implied. No new video or artwork is included.
+
 ## 1.1.0-beta.4 unknown-keyboard confirmation
 
 The candidate passed `npm run check`: TypeScript, ESLint, all 37 unit tests and the production build. All six affected keyboard/mobile workflows passed locally in 46.7 seconds. The new nineteenth scenario verifies extra Numpad1 input, no confirmation before input or during capture, explicit confirmation before saving, invalidation on a new capture, and an exported `user_confirmed` assessment without invented core-key totals. The model-specific Copilot path, Escape exits, confirmed model import, partial progress and mobile layout also passed. Labeled screenshots are software evidence; physical keyboards remain unverified. Prior release results below retain their identities.

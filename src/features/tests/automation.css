@@ -8,6 +8,114 @@
   background: #f4f8f1;
   margin-bottom: 16px;
 }
+.td-media-instructions {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 22px;
+}
+.td-media-instructions > svg {
+  color: #25714b;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.td-media-instructions > div {
+  flex: 1;
+}
+.td-media-instructions strong {
+  display: block;
+  font-size: 16px;
+  color: #24472f;
+  letter-spacing: -0.3px;
+}
+.td-media-instructions p {
+  margin: 5px 0 0;
+  color: #75826f;
+  font-size: 12px;
+  line-height: 1.65;
+  max-width: 550px;
+}
+.td-duration-chip {
+  padding: 7px 10px;
+  background: #f1f5ec;
+  color: #728467;
+  border: 1px solid #e5ecdf;
+  border-radius: 7px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+}
+.td-media-module .td-toolbar .primary {
+  min-height: 47px;
+  padding: 13px 22px;
+  box-shadow: 0 3px 8px #1c653817;
+}
+.td-media-module .td-media-placeholder {
+  flex-direction: column;
+  gap: 13px;
+  text-align: center;
+  padding: 25px;
+  background: radial-gradient(ellipse at center, #2c4335 0%, #182b20 80%);
+}
+.td-media-module .td-media-placeholder strong {
+  color: #e9f1e3;
+  font-size: 14px;
+  font-weight: 500;
+}
+.td-media-module .td-media-placeholder span {
+  color: #9caf9a;
+  font-size: 11px;
+}
+.td-media-module .td-camera-view {
+  aspect-ratio: 16/8.5;
+}
+.td-media-module .td-audio-panel {
+  background: linear-gradient(160deg, #f7faf1, #eef5e8);
+  padding: 35px 25px;
+  gap: 19px;
+}
+.td-media-module .td-sample-phrase {
+  font-size: clamp(23px, 3vw, 33px);
+  color: #2d5438;
+  max-width: 480px;
+  font-weight: 500;
+}
+.td-media-module .td-meter {
+  height: 18px;
+  width: min(100%, 520px);
+  border-radius: 20px;
+}
+.td-media-module .td-meter > span {
+  border-radius: 20px;
+}
+.td-media-private {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #87917f;
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 16px;
+}
+.td-media-private svg {
+  flex-shrink: 0;
+  color: #6d9478;
+}
+@media (max-width: 480px) {
+  .td-media-instructions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .td-media-instructions .td-duration-chip {
+    margin-left: 33px;
+  }
+  .td-media-module .td-camera-view {
+    aspect-ratio: 4/3;
+  }
+  .td-media-module .td-audio-panel {
+    padding: 27px 18px;
+  }
+}
 .td-auto-status.is-complete {
   border-color: #b1d0ba;
   background: #eaf5ec;

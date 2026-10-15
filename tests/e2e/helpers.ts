@@ -14,9 +14,9 @@ export async function startInspection(
     .click();
   await expect(page).toHaveURL(/\/inspect\/[^/]+\/scan/);
   await expect(
-    page.getByText("Your quick scan is saved.", { exact: true }),
+    page.getByText("Your device overview is ready.", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: /Device & setup/ }).click();
+  await page.getByRole("link", { name: "Change device or checks" }).click();
   await page.getByLabel("Give it a name").fill(nickname);
   return page.url().match(/\/inspect\/([^/]+)\//)![1];
 }
@@ -99,7 +99,12 @@ export async function evidence(
       banner.textContent = label;
       banner.style.cssText =
         "position:relative;padding:7px 12px;background:#132b29;color:white;font:11px/1.4 system-ui;text-align:center;pointer-events:none";
+      const touchStage = document.querySelector(".td-touch-stage.is-expanded");
+      if (touchStage)
+        banner.style.cssText +=
+          ";position:absolute;bottom:0;left:0;right:0;z-index:100";
       (
+        touchStage ??
         document.querySelector(".td-keyboard-capture.is-capturing") ??
         document.body
       ).prepend(banner);
@@ -107,11 +112,18 @@ export async function evidence(
     },
     production ? `Production HTTPS · ${text}` : text,
   );
-  await page.screenshot({
-    path: path.join(target, name),
-    fullPage: true,
-    animations: "disabled",
-  });
+  const touchStage = page.locator(".td-touch-stage.is-expanded");
+  if (await touchStage.count())
+    await touchStage.screenshot({
+      path: path.join(target, name),
+      animations: "disabled",
+    });
+  else
+    await page.screenshot({
+      path: path.join(target, name),
+      fullPage: true,
+      animations: "disabled",
+    });
   await page
     .locator("#software-test-evidence-label")
     .evaluate((element) => element.remove());

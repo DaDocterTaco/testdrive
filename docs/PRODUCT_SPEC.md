@@ -13,11 +13,11 @@ Primary users are people inspecting a used device and owners investigating a sus
 ## Inspection workflow
 
 1. Open TESTDRIVE on the device to inspect. One **Start inspection** action begins the automatic scan without an account or a media permission prompt.
-2. Profile collection, processing, and graphics checks run sequentially with actual progress, bounded workloads, stop controls, and interruption handling. The finished scan opens the next pending guided check.
+2. Profile collection, processing, and graphics checks run sequentially with actual progress, bounded workloads, stop controls, and interruption handling. The finished scan shows a device overview and offers the next pending guided check. Battery charge and website storage allowance are bounded browser API readings; unavailable values remain unknown and website quota never stands in for physical disk capacity.
 3. Optionally change the proposed device class, purpose, nickname, keyboard profile, or selected checks under Device & setup. Keyboard and touch checks can coexist on a hybrid device. Saving setup after a completed scan does not repeat the scan unnecessarily.
 4. Complete guided checks with one clear task at a time. Matching input events and bounded media observations can complete an automatic assessment; optional human answers remain separate. Saving continues to the next pending check. Skip, retry, finish early, or revisit a test without fabricating a pass.
 5. Optionally import supported exact specifications locally and compare specific seller claims.
-6. Review observations, attention items, unknowns, and next steps. Finalize a versioned local report, export/import JSON, or use the browser's Print / Save PDF service.
+6. Review observations, attention items, unknowns, and next steps. Technical observations expand on demand and print in full. Finalize a versioned local report, export/import JSON, or use the browser's Print / Save PDF service.
 
 ## Evidence language
 

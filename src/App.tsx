@@ -41,7 +41,6 @@ import {
   Layers,
   LockKeyhole,
   Monitor,
-  MoreHorizontal,
   MousePointer2,
   Plus,
   ScanLine,
@@ -288,25 +287,36 @@ function useStart() {
 }
 
 function Header() {
+  const location = useLocation();
+  const focused = /^\/inspect\/[^/]+\/test\//.test(location.pathname);
+  const inspectionId = location.pathname.split("/")[2];
   return (
-    <header className="site-header">
+    <header className={`site-header ${focused ? "focused-header" : ""}`}>
       <Link to="/" className="brand" aria-label="Testdrive home">
         <span className="brand-icon">
           <ScanLine size={23} />
         </span>
         TESTDRIVE<span className="beta">BETA</span>
       </Link>
-      <nav aria-label="Main navigation">
-        <NavLink to="/" end>
-          Overview
-        </NavLink>
-        <NavLink to="/tests">Test library</NavLink>
-        <NavLink to="/reports">Saved reports</NavLink>
-      </nav>
-      <Link to="/about" className="header-help">
-        <CircleHelp size={18} />
-        <span>How it works</span>
-      </Link>
+      {focused ? (
+        <Link className="button" to={`/inspect/${inspectionId}/tests`}>
+          <X size={17} /> Exit check
+        </Link>
+      ) : (
+        <>
+          <nav aria-label="Main navigation">
+            <NavLink to="/" end>
+              Overview
+            </NavLink>
+            <NavLink to="/tests">Test library</NavLink>
+            <NavLink to="/reports">Saved reports</NavLink>
+          </nav>
+          <Link to="/about" className="header-help">
+            <CircleHelp size={18} />
+            <span>How it works</span>
+          </Link>
+        </>
+      )}
     </header>
   );
 }
@@ -339,6 +349,30 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [loc.pathname]);
+  useEffect(() => {
+    let closed: HTMLDetailsElement[] = [];
+    const expand = () => {
+      closed = Array.from(
+        document.querySelectorAll<HTMLDetailsElement>("details:not([open])"),
+      );
+      closed.forEach((detail) => {
+        detail.open = true;
+      });
+    };
+    const restore = () => {
+      closed.forEach((detail) => {
+        detail.open = false;
+      });
+      closed = [];
+    };
+    window.addEventListener("beforeprint", expand);
+    window.addEventListener("afterprint", restore);
+    return () => {
+      restore();
+      window.removeEventListener("beforeprint", expand);
+      window.removeEventListener("afterprint", restore);
+    };
+  }, []);
   return (
     <ErrorBoundary resetKey={loc.pathname}>
       <a href="#main" className="skip-link">
@@ -365,7 +399,7 @@ export default function App() {
           />
         </Routes>
       </main>
-      <Footer />
+      {!/^\/inspect\/[^/]+\/test\//.test(loc.pathname) && <Footer />}
     </ErrorBoundary>
   );
 }
@@ -385,17 +419,15 @@ function Home() {
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow">
-            <span className="local-dot" /> A LITTLE CERTAINTY GOES A LONG WAY
+            <span className="local-dot" /> KNOW WHAT YOU’RE GETTING
           </div>
           <h1>
-            Good devices.
-            <br />
-            <span>No guesswork.</span>
+            Check this device <br />
+            <span>before you buy it.</span>
           </h1>
           <p className="hero-description">
-            Start once. We run the quick checks, then guide you through the
-            rest—one simple task at a time. Get a clear report of what responded
-            and what needs a closer look.
+            Try the keyboard, camera, sound and screen. We’ll guide you one step
+            at a time and save a clear record of what worked.
           </p>
           <div className="hero-actions">
             <button
@@ -406,7 +438,7 @@ function Home() {
               Start inspection <ArrowRight size={19} />
             </button>
             <Link to="/tests" className="text-button">
-              Explore the tests <ChevronRight size={16} />
+              Browse all checks <ChevronRight size={16} />
             </Link>
           </div>
           <p className="start-explainer">
@@ -430,36 +462,51 @@ function Home() {
             </Link>
           )}
         </div>
-        <div className="device-visual">
+        <div className="device-visual home-device-preview">
           <div className="visual-top">
             <span>
-              <span className="local-dot" /> READY WHEN YOU ARE
+              <span className="local-dot" /> THIS DEVICE, RIGHT NOW
             </span>
-            <MoreHorizontal size={20} />
+            <Laptop size={22} />
           </div>
-          <div className="computer-art" aria-hidden="true">
-            <div className="art-screen">
-              <div className="art-ui-bar">
-                <i />
-                <i />
-                <i />
-              </div>
-              <div className="art-scan">
-                <ScanLine size={39} />
-                <span>Let’s take a closer look.</span>
-                <div className="art-line" />
-              </div>
-            </div>
-            <div className="art-base" />
-            <div className="art-phone">
-              <div className="phone-speaker" />
-              <Fingerprint size={26} />
-              <div className="phone-dots">
-                <i />
-                <i />
-                <i />
-              </div>
-            </div>
+          <div className="home-device-heading">
+            <h2>{String(fact("os")?.value || "Your device")}</h2>
+            <p>
+              {String(fact("browser")?.value || "Your browser")} ·{" "}
+              {device.deviceClass === "unknown"
+                ? "Device type not shared"
+                : device.deviceClass}
+            </p>
+          </div>
+          <div className="home-check-list">
+            {[
+              [
+                ScanLine,
+                "A quick device overview",
+                "Browser, display, battery and available storage information.",
+              ],
+              [
+                Touchpad,
+                "Simple hands-on checks",
+                "Follow one instruction at a time. Skip any check.",
+              ],
+              [
+                FileCheck2,
+                "Your findings, saved",
+                "See what responded and what still needs a closer look.",
+              ],
+            ].map(([C, title, copy]) => {
+              const StepIcon = C as LucideIcon;
+              return (
+                <div key={String(title)}>
+                  <StepIcon size={22} />
+                  <div>
+                    <strong>{String(title)}</strong>
+                    <p>{String(copy)}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="visual-divider" />
           <div className="device-preview">
@@ -467,8 +514,8 @@ function Home() {
               <Laptop size={20} />
             </span>
             <div>
-              <strong>Your next inspection starts here</strong>
-              <p>Computers, phones & tablets. One simple check.</p>
+              <strong>Ready to start</strong>
+              <p>No install. No account. You stay in control.</p>
             </div>
             <span className="ready-pill">Browser ready</span>
           </div>
@@ -495,8 +542,8 @@ function Home() {
       <section className="home-lower">
         <div className="section-title">
           <div>
-            <span className="eyebrow">THE IMPORTANT THINGS, COVERED</span>
-            <h2>A proper check. Without the technical degree.</h2>
+            <span className="eyebrow">CHECK WHAT MATTERS</span>
+            <h2>Small checks. A clearer picture.</h2>
           </div>
           <Link className="text-button" to="/tests">
             See all {TESTS.length} checks <ArrowRight size={16} />
@@ -594,16 +641,26 @@ function Library() {
   const [filter, setFilter] = useState("all");
   return (
     <div className="page content-page">
-      <PageHeading
-        eyebrow="YOUR DEVICE, A CLOSER LOOK"
-        title="The test library"
-        description="One concern or a complete check. Choose where you want to start."
-      />
+      <div className="library-intro">
+        <PageHeading
+          eyebrow="TEST LIBRARY"
+          title="What would you like to check?"
+          description="Run one check, or let us guide you through a full inspection."
+        />
+        <button
+          className="button primary large"
+          disabled={busy}
+          onClick={() => start()}
+        >
+          Start full inspection <ArrowRight size={18} />
+        </button>
+      </div>
       <div className="tabs library-tabs">
         {["all", "input", "media", "display", "performance"].map((f) => (
           <button
             key={f}
             className={filter === f ? "active" : ""}
+            aria-pressed={filter === f}
             onClick={() => setFilter(f)}
           >
             {f === "all"
@@ -615,36 +672,77 @@ function Library() {
         ))}
       </div>
       <div className="test-grid">
-        {TESTS.filter((t) => filter === "all" || t.group === filter).map(
-          (t) => (
-            <article className="test-card" key={t.id}>
-              <div className="test-card-top">
-                <span className="category-icon">
-                  <Icon id={t.id} />
-                </span>
-                <span className="subtle-chip">
-                  {t.mode === "automatic" ? "Automatic" : "Hands-on"}
-                </span>
-              </div>
-              <h3>{t.title}</h3>
-              <p>{t.description}</p>
-              <div className="test-card-bottom">
-                <span>
-                  <Clock3 size={14} />
-                  {t.duration}
-                </span>
-                <button
-                  className="text-button"
-                  disabled={busy}
-                  onClick={() => start(t.id)}
-                >
-                  Run check <ArrowRight size={15} />
-                </button>
-              </div>
-            </article>
-          ),
-        )}
+        {TESTS.filter(
+          (t) =>
+            t.mode === "guided" && (filter === "all" || t.group === filter),
+        ).map((t) => (
+          <article className="test-card" key={t.id}>
+            <div className="test-card-top">
+              <span className="category-icon">
+                <Icon id={t.id} />
+              </span>
+              <span className="subtle-chip">
+                {t.mode === "automatic" ? "Automatic" : "Hands-on"}
+              </span>
+            </div>
+            <h3>{t.title}</h3>
+            <p>{t.description}</p>
+            <div className="test-card-bottom">
+              <span>
+                <Clock3 size={14} />
+                {t.duration}
+              </span>
+              <button
+                className="text-button"
+                disabled={busy}
+                onClick={() => start(t.id)}
+              >
+                Check{" "}
+                {t.id === "KEY-01"
+                  ? "keyboard"
+                  : t.id === "PTR-01"
+                    ? "pointer"
+                    : t.id === "TOUCH-01"
+                      ? "touch"
+                      : t.id === "CAM-01"
+                        ? "camera"
+                        : t.id === "MIC-01"
+                          ? "microphone"
+                          : t.id === "SPK-01"
+                            ? "speakers"
+                            : t.id === "PWR-01"
+                              ? "battery"
+                              : "display"}{" "}
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </article>
+        ))}
       </div>
+      {(filter === "all" || filter === "performance") && (
+        <section className="library-automatic">
+          <div>
+            <h2>Included in the quick scan</h2>
+            <p>
+              These checks run automatically when you start a full inspection.
+            </p>
+          </div>
+          <div className="library-automatic-grid">
+            {TESTS.filter((t) => t.mode === "automatic").map((t) => (
+              <button
+                className="button"
+                key={t.id}
+                disabled={busy}
+                onClick={() => start(t.id)}
+              >
+                <Icon id={t.id} size={20} />
+                <span>{t.title}</span>
+                <ArrowRight size={16} />
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="callout">
         <ShieldCheck size={22} />
         <div>
@@ -743,7 +841,7 @@ function InspectionShell() {
   return (
     <InspectionContext.Provider value={{ inspection: i, update }}>
       <div
-        className={`page inspection-page ${current === "test" ? "guided-page" : ""}`}
+        className={`page inspection-page ${current === "test" ? "guided-page" : current === "scan" ? "scan-page" : ""}`}
       >
         <div className="inspection-topline">
           <Link to="/reports" className="text-button">
@@ -983,14 +1081,102 @@ function Setup() {
   );
 }
 
+function DeviceOverview({ inspection: i }: { inspection: Inspection }) {
+  const facts = [...i.profileFacts, ...(latest(i, "SYS-01")?.facts || [])];
+  const read = (key: string) => [...facts].reverse().find((f) => f.key === key);
+  const text = (key: string, fallback = "Not shared by this browser") =>
+    read(key) ? String(read(key)!.value) : fallback;
+  const model = [...i.profileFacts]
+    .reverse()
+    .find(
+      (f) =>
+        f.key === "model" &&
+        ["imported_system_report", "user_provided"].includes(f.source),
+    );
+  const battery = read("battery.level");
+  const quota = read("browser_storage_quota");
+  const rows = [
+    {
+      icon: Laptop,
+      label: "Device",
+      value: model
+        ? String(model.value)
+        : `${text("os", "Unknown system")} ${i.deviceClass === "computer" ? "computer" : i.deviceClass === "unknown" ? "device" : i.deviceClass}`,
+      detail: model
+        ? sources[model.source]
+        : "Device type suggested by the browser",
+    },
+    {
+      icon: Monitor,
+      label: "Browser & screen",
+      value: text("browser"),
+      detail: `${text("display_css", "Size unavailable")} CSS pixels · not physical resolution`,
+    },
+    {
+      icon: BatteryCharging,
+      label: "Battery",
+      value: battery
+        ? `${battery.value}%${read("battery.charging")?.value === true ? " · Charging" : " · On battery"}`
+        : "Not shared by this browser",
+      detail: battery
+        ? "Current reported charge · wear is not checked"
+        : "You can check the charge in device settings",
+    },
+    {
+      icon: HardDrive,
+      label: "Browser storage",
+      value: quota
+        ? `${(Number(quota.value) / 1024).toFixed(1)} GiB allowance`
+        : "Not shared by this browser",
+      detail: "Website storage allowance, not disk capacity or free disk space",
+    },
+  ];
+  return (
+    <section className="device-summary" aria-label="Device overview">
+      <div className="device-summary-heading">
+        <div>
+          <span className="eyebrow">YOUR DEVICE AT A GLANCE</span>
+          <h2>Here’s what your browser shares</h2>
+        </div>
+        <span className="subtle-chip">No permission needed</span>
+      </div>
+      <div className="device-summary-grid">
+        {rows.map((row) => (
+          <div key={row.label}>
+            <row.icon className="device-summary-icon" size={20} />
+            <span>{row.label}</span>
+            <strong>{row.value}</strong>
+            <small>{row.detail}</small>
+          </div>
+        ))}
+      </div>
+      <p className="device-summary-note">
+        <Info size={16} />
+        Exact model, installed memory and disk capacity may need a system
+        report.{" "}
+        <Link to={`/inspect/${i.id}/specs`}>
+          Add exact specifications <ArrowRight size={14} />
+        </Link>
+      </p>
+    </section>
+  );
+}
+
 function QuickScan() {
   const { inspection: i, update } = useInspection();
   const navigate = useNavigate();
   const location = useLocation();
   const [running, setRunning] = useState(false);
   const [current, setCurrent] = useState<TestId>();
-  const [finished, setFinished] = useState(false);
+  const [finished, setFinished] = useState(() =>
+    i.selectedTestIds
+      .filter((id) => TESTS.find((t) => t.id === id)?.mode === "automatic")
+      .every((id) => latest(i, id)?.status === "completed"),
+  );
   const [elapsed, setElapsed] = useState(0);
+  const [stopped, setStopped] = useState(false);
+  const scanMounted = useRef(true);
+  const scanRunning = useRef(false);
   const controller = useRef<AbortController | undefined>(undefined);
   const scanRef = useRef<() => void>(() => {});
   const latestI = useRef(i);
@@ -998,7 +1184,13 @@ function QuickScan() {
   const auto = i.selectedTestIds.filter(
     (id) => TESTS.find((t) => t.id === id)?.mode === "automatic",
   );
-  useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => {
+    scanMounted.current = true;
+    return () => {
+      scanMounted.current = false;
+      controller.current?.abort();
+    };
+  }, []);
   useEffect(() => {
     if (!new URLSearchParams(location.search).has("start")) return;
     const timer = setTimeout(() => {
@@ -1013,32 +1205,53 @@ function QuickScan() {
     return () => clearInterval(timer);
   }, [running]);
   const scan = async () => {
-    if (controller.current && !controller.current.signal.aborted && running)
-      return;
-    controller.current = new AbortController();
+    if (scanRunning.current) return;
+    scanRunning.current = true;
+    const activeController = new AbortController();
+    controller.current = activeController;
+    const active = () =>
+      scanMounted.current && controller.current === activeController;
     setRunning(true);
     setFinished(false);
+    setStopped(false);
     setElapsed(0);
     let next = { ...latestI.current, state: "scanning" };
-    await update(next);
+    if (!(await update(next)) || !active()) {
+      scanRunning.current = false;
+      if (active()) setRunning(false);
+      return;
+    }
     for (const id of auto) {
-      if (controller.current.signal.aborted) break;
+      if (activeController.signal.aborted || !active()) break;
       setCurrent(id);
-      const a = await runAutomatic(id, controller.current.signal);
-      next = { ...next, attempts: [...next.attempts, a] };
+      const a = await runAutomatic(id, activeController.signal);
+      if (!active()) {
+        scanRunning.current = false;
+        return;
+      }
+      next = { ...latestI.current, attempts: [...next.attempts, a] };
       if (!(await update(next))) {
+        scanRunning.current = false;
         setRunning(false);
         setCurrent(undefined);
         return;
       }
     }
-    await update({
-      ...next,
-      state: controller.current.signal.aborted ? "paused" : "guided",
+    if (!active()) {
+      scanRunning.current = false;
+      return;
+    }
+    const saved = await update({
+      ...latestI.current,
+      attempts: next.attempts,
+      state: activeController.signal.aborted ? "paused" : "guided",
     });
+    scanRunning.current = false;
+    if (!active()) return;
+    setStopped(activeController.signal.aborted);
     setCurrent(undefined);
     setRunning(false);
-    setFinished(true);
+    setFinished(saved);
   };
   scanRef.current = () => {
     void scan();
@@ -1055,22 +1268,38 @@ function QuickScan() {
   return (
     <>
       <div className="panel-heading">
-        <h2>First, we’ll handle the automatic checks.</h2>
+        <h2>
+          {finished && stopped
+            ? "Scan stopped. Your progress is saved."
+            : finished
+              ? "Your device overview is ready."
+              : "First, a quick look at your device."}
+        </h2>
         <p>
-          Sit tight for a few seconds. Then we’ll guide you through one simple
-          task at a time.
+          {finished && stopped
+            ? "Some automatic checks are unfinished. Retry the scan, or continue with the checks you want."
+            : finished
+              ? "Review the information below, then continue to your hands-on checks."
+              : "Sit tight for a few seconds. Then we’ll guide you through one simple task at a time."}
         </p>
       </div>
-      <section className="panel scan-panel">
+      {latest(i, "SYS-01")?.status === "completed" && (
+        <DeviceOverview inspection={i} />
+      )}
+      <section
+        className={`panel scan-panel ${finished ? "scan-complete" : ""}`}
+      >
         <div className={`scan-orb ${running ? "scanning" : ""}`}>
           <ScanLine size={38} />
         </div>
-        <h3>
+        <h3 aria-live="polite">
           {running
             ? TESTS.find((t) => t.id === current)?.title ||
               "Preparing your scan"
             : finished
-              ? "Your quick scan is saved."
+              ? stopped
+                ? "Automatic scan paused."
+                : "Your quick scan is saved."
               : "Ready for a quick scan?"}
         </h3>
         <p>
@@ -1141,6 +1370,13 @@ function QuickScan() {
           </span>
         )}
       </section>
+      {stopped && !running && (
+        <div className="scan-secondary">
+          <button className="button" onClick={scan}>
+            Retry automatic scan
+          </button>
+        </div>
+      )}
       <div className="callout">
         <Info size={19} />
         <p>
@@ -1296,6 +1532,27 @@ function Guided() {
           of {i.selectedTestIds.length} checked
         </span>
         <Link to={`/inspect/${i.id}/review`}>Finish early</Link>
+      </div>
+      <div
+        className="guided-progress"
+        role="img"
+        aria-label={`Check ${i.selectedTestIds.indexOf(t.id) + 1} of ${i.selectedTestIds.length}`}
+      >
+        {i.selectedTestIds.map((id) => (
+          <span
+            key={id}
+            className={
+              id === t.id
+                ? "active"
+                : latest(i, id) &&
+                    !["running", "interrupted", "cancelled"].includes(
+                      latest(i, id)!.status,
+                    )
+                  ? "complete"
+                  : ""
+            }
+          />
+        ))}
       </div>
       <TestWorkbench
         key={testId}
@@ -1730,6 +1987,28 @@ function Summary({ inspection: i }: { inspection: Inspection }) {
   );
   return (
     <>
+      {c.attention + differences.length > 0 && (
+        <div className="report-attention">
+          <Activity size={24} />
+          <div>
+            <strong>
+              {c.attention + differences.length}{" "}
+              {c.attention + differences.length === 1
+                ? "item needs"
+                : "items need"}{" "}
+              a closer look
+            </strong>
+            <p>
+              {differences.length
+                ? "Some listed specifications differ from the information you added."
+                : "You recorded a possible issue during this inspection. Review the findings before making a decision."}
+            </p>
+          </div>
+          <a className="button" href="#findings">
+            Review findings <ArrowRight size={16} />
+          </a>
+        </div>
+      )}
       <div className="summary-grid">
         <div>
           <span className="summary-icon success">
@@ -1773,7 +2052,7 @@ function Results({
   editable?: boolean;
 }) {
   return (
-    <section className="panel results-panel">
+    <section className="panel results-panel" id="findings">
       <div className="panel-title">
         <h3>Inspection findings</h3>
         <span className="subtle-chip">Recorded evidence</span>
@@ -1803,7 +2082,7 @@ function Results({
                 "This check has not been run. Its condition remains unknown."}
             </p>
             {a?.facts.length ? (
-              <details className="evidence" open={!editable}>
+              <details className="evidence">
                 <summary>
                   {a.facts.length} recorded observation
                   {a.facts.length === 1 ? "" : "s"}
@@ -2146,13 +2425,53 @@ function ReportPage() {
         </div>
       </div>
       <Summary inspection={i} />
-      <Results inspection={i} />
+      <div className="report-findings-layout">
+        <Results inspection={i} />
+        <aside className="report-unknowns">
+          <h2>Still unknown</h2>
+          <p>These checks need a closer look outside the browser.</p>
+          {[
+            [BatteryCharging, "Battery wear"],
+            [HardDrive, "Internal storage health"],
+            [LockKeyhole, "Ownership and locks"],
+          ].map(([C, title]) => {
+            const UnknownIcon = C as LucideIcon;
+            return (
+              <div className="unknown-row" key={String(title)}>
+                <UnknownIcon size={20} />
+                <strong>{String(title)}</strong>
+                <span className="status neutral">Not checked</span>
+              </div>
+            );
+          })}
+          <div className="unknown-next">
+            <CircleHelp size={22} />
+            <h3>
+              {counts(i).unassessed
+                ? `${counts(i).unassessed} checks are not fully assessed`
+                : "Keep your report for reference"}
+            </h3>
+            <p>
+              {counts(i).unassessed
+                ? "You can return to any skipped or uncertain check while you have the device."
+                : "A recorded response covers what was tested during this session."}
+            </p>
+            <Link className="button" to={`/inspect/${i.id}/tests`}>
+              {counts(i).unassessed ? "Resume checks" : "Revisit checks"}
+              <ArrowRight size={15} />
+            </Link>
+          </div>
+        </aside>
+      </div>
       <section className="panel">
         <h3>Device profile & specifications</h3>
         <HardwareSummary inspection={i} />
-        <Facts
-          facts={i.profileFacts.filter((f) => f.key !== "inspectionNote")}
-        />
+        <details className="evidence">
+          <summary>Technical device information</summary>
+          <Facts
+            facts={i.profileFacts.filter((f) => f.key !== "inspectionNote")}
+          />
+        </details>
         <p className="muted">
           Physical storage capacity and battery wear: not checked. Browser hints
           are qualified observations.

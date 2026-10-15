@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Camera, Mic, ShieldCheck } from "lucide-react";
 import { fact, mediaError, useEvidence } from "./shared";
 import type { Evidence, ModuleProps } from "./shared";
 import type { Fact } from "../../types";
@@ -376,12 +377,18 @@ export function CameraTest({ onChange }: ModuleProps) {
     setCaptures((n) => n + 1);
   }
   return (
-    <div className="td-module">
-      <p>
-        Choose Start camera, allow access, then wave a hand for four seconds. We
-        check that video arrives and sample light and changes automatically. The
-        camera turns off when the sample finishes. Images stay on this page.
-      </p>
+    <div className="td-module td-media-module">
+      <div className="td-media-instructions">
+        <Camera size={23} />
+        <div>
+          <strong>Wave a hand. We’ll do the checking.</strong>
+          <p>
+            Allow camera access, then move a little for four seconds. We’ll
+            check for video, light and changes, then turn the camera off.
+          </p>
+        </div>
+        <span className="td-duration-chip">4 seconds</span>
+      </div>
       <div className="td-toolbar">
         <button
           className="primary"
@@ -492,7 +499,17 @@ export function CameraTest({ onChange }: ModuleProps) {
         <span className="td-focus-target" aria-hidden="true" />
         {!running && !frozen && (
           <div className="td-media-placeholder">
-            {busy ? "Waiting for camera access" : "Camera preview appears here"}
+            <Camera size={38} strokeWidth={1.4} />
+            <strong>
+              {busy
+                ? "Allow camera access to continue"
+                : "Your camera preview appears here"}
+            </strong>
+            <span>
+              {busy
+                ? "Look for your browser’s permission prompt."
+                : "Choose Start camera when you’re ready."}
+            </span>
           </div>
         )}
         <span className="td-media-badge">
@@ -546,6 +563,10 @@ export function CameraTest({ onChange }: ModuleProps) {
         lighting or a covered lens. Front/rear requests may open the same source
         when the browser exposes only one.
       </p>
+      <div className="td-media-private">
+        <ShieldCheck size={15} /> Preview stays on this device. No images are
+        added to your report.
+      </div>
       {frozen && (
         <button onClick={() => setFrozen("")}>Discard sample preview</button>
       )}
@@ -554,6 +575,7 @@ export function CameraTest({ onChange }: ModuleProps) {
 }
 
 export function MicrophoneTest({ onChange }: ModuleProps) {
+  const samplePanel = useRef<HTMLDivElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const context = useRef<AudioContext | null>(null);
   const analyser = useRef<AnalyserNode | null>(null);
@@ -940,6 +962,22 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         clearTimeout(promptTimer.current);
         promptTimer.current = null;
       }
+      // Bring the words and meter into view after permission is granted,
+      // before the five-second sample starts (especially above a sticky footer).
+      const panel = samplePanel.current;
+      if (panel) {
+        const bounds = panel.getBoundingClientRect();
+        const footer = panel
+          .closest(".td-workbench")
+          ?.querySelector(".td-workbench-footer")
+          ?.getBoundingClientRect();
+        const visibleBottom =
+          footer && footer.top > 0
+            ? Math.min(window.innerHeight, footer.top)
+            : window.innerHeight;
+        if (bounds.top < 0 || bounds.bottom > visibleBottom)
+          panel.scrollIntoView({ block: "center", behavior: "instant" });
+      }
       sampleStarted.current = performance.now();
       countdown.current = setInterval(() => {
         const elapsed = Math.min(
@@ -1074,12 +1112,18 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
     }
   }
   return (
-    <div className="td-module">
-      <p>
-        Choose Start, allow access, and read the sentence aloud. We check for
-        sound automatically for five seconds, then turn the microphone off. Your
-        recording stays in memory and is discarded when you leave.
-      </p>
+    <div className="td-module td-media-module">
+      <div className="td-media-instructions">
+        <Mic size={23} />
+        <div>
+          <strong>Read one sentence. See your result.</strong>
+          <p>
+            Allow access, then say the phrase below at a normal volume. We’ll
+            listen for five seconds and stop automatically.
+          </p>
+        </div>
+        <span className="td-duration-chip">5 seconds</span>
+      </div>
       <div className="td-toolbar">
         <button
           className="primary"
@@ -1190,7 +1234,7 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
           {notice}
         </div>
       )}
-      <div className="td-audio-panel">
+      <div className="td-audio-panel" ref={samplePanel}>
         <span className="td-sample-caption">
           {running ? "Say this out loud now" : "When the sample starts, say"}
         </span>
@@ -1204,7 +1248,9 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
               ? "Listening to input"
               : playback
                 ? "Sample ready to play"
-                : "Ready when you are"}
+                : busy
+                  ? "Allow microphone access in your browser"
+                  : "Ready when you are"}
         </div>
         {running && (
           <span className="td-sample-countdown">{remaining}s remaining</span>
@@ -1280,6 +1326,10 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         Silence can mean mute, routing or distance; it is not a hardware
         verdict.
       </p>
+      <div className="td-media-private">
+        <ShieldCheck size={15} /> Your sample stays on this device and
+        disappears when you leave this check.
+      </div>
     </div>
   );
 }

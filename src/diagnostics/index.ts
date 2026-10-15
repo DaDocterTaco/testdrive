@@ -110,7 +110,8 @@ export const TESTS: TestDefinition[] = [
   {
     id: "PWR-01",
     title: "Battery & charger",
-    description: "See reported charge and check whether connecting power changes the charging state.",
+    description:
+      "See reported charge and check whether connecting power changes the charging state.",
     mode: "guided",
     group: "performance",
     duration: "30–60 seconds",
@@ -316,7 +317,12 @@ function attempt(
   return {
     id: crypto.randomUUID(),
     testId,
-    testVersion: testId === "PERF-01" ? WORKLOAD_VERSION : "1.0.0",
+    testVersion:
+      testId === "PERF-01"
+        ? WORKLOAD_VERSION
+        : testId === "SYS-01"
+          ? "1.2.0"
+          : "1.0.0",
     status: "completed",
     startedAt,
     endedAt: new Date().toISOString(),
@@ -731,6 +737,99 @@ async function graphics(
     canvas.height = 1;
   }
 }
+async function overviewFacts(signal: AbortSignal): Promise<Fact[]> {
+  const facts = detectDevice().facts;
+  const bounded = async (read: () => Promise<Fact[]>): Promise<Fact[]> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        Promise.resolve()
+          .then(read)
+          .catch(() => []),
+        new Promise<Fact[]>((resolve) => {
+          timer = setTimeout(() => resolve([]), 1200);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const [battery, storage] = await Promise.all([
+    bounded(async () => {
+      const nav = navigator as Navigator & {
+        getBattery?: () => Promise<{ level: number; charging: boolean }>;
+      };
+      if (!nav.getBattery) return [];
+      const b = await nav.getBattery();
+      if (
+        !Number.isFinite(b.level) ||
+        b.level < 0 ||
+        b.level > 1 ||
+        typeof b.charging !== "boolean"
+      )
+        return [];
+      return [
+        {
+          ...makeFact(
+            "battery.level",
+            "Reported battery charge",
+            Math.round(b.level * 100),
+            "browser_reported",
+            "Current browser reading, not battery health. Some devices report a default.",
+          ),
+          unit: "%",
+        },
+        makeFact(
+          "battery.charging",
+          "Reported charging state",
+          b.charging,
+          "browser_reported",
+          "A browser reading; charger response has not been tested.",
+        ),
+      ];
+    }),
+    bounded(async () => {
+      if (!navigator.storage?.estimate) return [];
+      const estimate = await navigator.storage.estimate();
+      return [
+        ...(typeof estimate.quota === "number" &&
+        Number.isFinite(estimate.quota) &&
+        estimate.quota > 0
+          ? [
+              {
+                ...makeFact(
+                  "browser_storage_quota",
+                  "Browser storage allowance",
+                  Math.round(estimate.quota / 1024 ** 2),
+                  "browser_reported",
+                  "Estimated storage allowance for this website, not physical disk capacity or free disk space.",
+                ),
+                unit: "MiB",
+              },
+            ]
+          : []),
+        ...(typeof estimate.usage === "number" &&
+        Number.isFinite(estimate.usage) &&
+        estimate.usage >= 0
+          ? [
+              {
+                ...makeFact(
+                  "browser_storage_usage",
+                  "Storage used by this website",
+                  Math.round(estimate.usage / 1024 ** 2),
+                  "browser_reported",
+                  "Estimated use by this website only. Other apps and files are not measured.",
+                ),
+                unit: "MiB",
+              },
+            ]
+          : []),
+      ];
+    }),
+  ]);
+  return signal.aborted ? [] : [...facts, ...battery, ...storage];
+}
+
 export async function runAutomatic(
   testId: TestId,
   signal: AbortSignal,
@@ -745,12 +844,22 @@ export async function runAutomatic(
       "You stopped this check before it started.",
     );
   try {
-    if (testId === "SYS-01")
+    if (testId === "SYS-01") {
+      const facts = await overviewFacts(signal);
+      if (signal.aborted)
+        return unfinished(
+          testId,
+          startedAt,
+          "cancelled",
+          "user_stopped",
+          "You stopped the device scan. Run it again when you are ready.",
+        );
       return attempt(testId, startedAt, {
-        facts: detectDevice().facts,
+        facts,
         explanation:
           "Collected the information available without permission. Missing exact specifications remain unknown; this profile is not a hardware-health pass.",
       });
+    }
     if (testId === "PERF-01") return await processing(signal, startedAt);
     if (testId === "GFX-01") return await graphics(signal, startedAt);
     return unfinished(

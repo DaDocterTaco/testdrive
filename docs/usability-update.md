@@ -1,8 +1,12 @@
-# TESTDRIVE 1.1 usability update
+# TESTDRIVE usability updates
 
 This update makes an inspection easier to start and guides each action. It also keeps a clear distinction between an event the browser observed and physical quality the user judged.
 
 ## Changes
+
+- The 1.2 interface uses a simpler home screen, eight guided library cards with automatic checks separate, a compact guided workspace, and a report that separates attention items from unknowns. Technical observations remain expandable.
+- The scan ends with a source-labeled device overview. Supported browser APIs expose charge and website storage quota; missing readings remain unknown. Quota is not disk capacity or free space.
+- Touch checks expand to native fullscreen or the visible page viewport, show live coverage, offer movable controls, and retain results on Exit or Escape. Display color tours use the same fullscreen/fallback approach. Both preserve explicit user assessment instead of automatically certifying a panel.
 
 - One **Start inspection** action opens the automatic scan. Device details and the inspection plan remain editable, and the completed scan points directly to the next check.
 - Saving a guided result continues to the next pending check. Users can still skip an unavailable check, revisit the checklist, or review a report early.

@@ -1,4 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ArrowRight,
+  BatteryCharging,
+  Camera,
+  Check,
+  Hand,
+  Keyboard,
+  Mic,
+  Monitor,
+  Mouse,
+  SkipForward,
+  Volume2,
+} from "lucide-react";
 import type {
   DeviceClass,
   ExecutionStatus,
@@ -85,6 +98,16 @@ const definitions: Partial<
     component: PowerTest,
   },
 };
+const testIcons = {
+  "KEY-01": Keyboard,
+  "PTR-01": Mouse,
+  "TOUCH-01": Hand,
+  "CAM-01": Camera,
+  "MIC-01": Mic,
+  "SPK-01": Volume2,
+  "DISP-01": Monitor,
+  "PWR-01": BatteryCharging,
+};
 export function TestWorkbench(props: Props) {
   return <TestSession key={props.testId} {...props} />;
 }
@@ -118,7 +141,7 @@ function TestSession({
       return {
         id: attemptId.current,
         testId,
-        testVersion: "1.1.0",
+        testVersion: "1.2.0",
         status: status === "running" ? (current.status ?? status) : status,
         startedAt: started.current,
         ...(status === "interrupted"
@@ -206,6 +229,19 @@ function TestSession({
       </div>
     );
   const Module = definition.component;
+  const TestIcon = testIcons[testId as keyof typeof testIcons] ?? Check;
+  const canSave = !(
+    (!answer && (!evidence.automatic?.complete || !!evidence.status)) ||
+    (answer === "looks_good" && (!evidence.ready || !!evidence.status))
+  );
+  const progressStep = canSave ? 2 : evidence.ready ? 1 : 0;
+  const sessionStatus = evidence.status
+    ? "Check needs attention"
+    : canSave
+      ? "Ready to save"
+      : evidence.ready
+        ? "Input received"
+        : "Ready when you are";
   function finish(status: ExecutionStatus = "completed") {
     if (finished.current) return;
     finished.current = true;
@@ -234,7 +270,7 @@ function TestSession({
     onComplete({
       id: attemptId.current,
       testId,
-      testVersion: "1.1.0",
+      testVersion: "1.2.0",
       status: actualStatus,
       startedAt: started.current,
       endedAt: new Date().toISOString(),
@@ -281,9 +317,14 @@ function TestSession({
       data-device-class={deviceClass}
     >
       <header className="td-workbench-heading">
-        <div>
-          <span className="td-eyebrow">{definition.eyebrow}</span>
-          <h2>{definition.title}</h2>
+        <div className="td-workbench-title">
+          <span className="td-workbench-icon">
+            <TestIcon size={25} strokeWidth={1.8} />
+          </span>
+          <div>
+            <span className="td-eyebrow">{definition.eyebrow}</span>
+            <h2>{definition.title}</h2>
+          </div>
         </div>
         <button
           className="td-close"
@@ -295,6 +336,21 @@ function TestSession({
           ×
         </button>
       </header>
+      <div className="td-check-flow" aria-label="Check progress">
+        {["Try the check", "Review your result", "Save & continue"].map(
+          (label, index) => (
+            <div
+              key={label}
+              className={index <= progressStep ? "is-reached" : ""}
+            >
+              <span>
+                {index < progressStep ? <Check size={12} /> : index + 1}
+              </span>
+              {label}
+            </div>
+          ),
+        )}
+      </div>
       <Module
         onChange={receive}
         profileId={profileId}
@@ -330,23 +386,38 @@ function TestSession({
         </p>
         <div className="td-answer-options">
           <button
+            aria-label="Looks / sounds right"
             className={answer === "looks_good" ? "selected" : ""}
             disabled={!evidence.ready || !!evidence.status}
             onClick={() => setAnswer("looks_good")}
           >
-            ✓ Looks / sounds right
+            <span className="td-choice-symbol">✓</span>
+            <span>
+              <strong>Looks / sounds right</strong>
+              <small>Everything I checked felt normal.</small>
+            </span>
           </button>
           <button
+            aria-label="I noticed a problem"
             className={answer === "issue" ? "selected issue" : ""}
             onClick={() => setAnswer("issue")}
           >
-            ! I noticed a problem
+            <span className="td-choice-symbol">!</span>
+            <span>
+              <strong>I noticed a problem</strong>
+              <small>Something needs a closer look.</small>
+            </span>
           </button>
           <button
+            aria-label="Not sure"
             className={answer === "not_sure" ? "selected" : ""}
             onClick={() => setAnswer("not_sure")}
           >
-            ? Not sure
+            <span className="td-choice-symbol">?</span>
+            <span>
+              <strong>Not sure</strong>
+              <small>I’d like to check this again.</small>
+            </span>
           </button>
         </div>
         <details className="td-note-details">
@@ -373,17 +444,33 @@ function TestSession({
           </p>
         )}
       <footer className="td-workbench-footer">
-        <button onClick={() => finish("skipped")}>Skip this check</button>
-        <button
-          className="primary"
-          disabled={
-            (!answer && (!evidence.automatic?.complete || !!evidence.status)) ||
-            (answer === "looks_good" && (!evidence.ready || !!evidence.status))
-          }
-          onClick={() => finish()}
-        >
-          {continueLabel} <span aria-hidden="true">→</span>
-        </button>
+        <div className="td-footer-copy">
+          <span
+            className={`td-session-indicator ${canSave ? "is-ready" : ""}`}
+          />
+          <span>
+            <strong>{sessionStatus}</strong>
+            <small>
+              {canSave
+                ? "Save this result and move on."
+                : evidence.status
+                  ? "Retry the check, add your feedback, or skip."
+                  : "Finish the check or choose your feedback above."}
+            </small>
+          </span>
+        </div>
+        <div className="td-footer-actions">
+          <button className="td-skip" onClick={() => finish("skipped")}>
+            <SkipForward size={15} /> Skip this check
+          </button>
+          <button
+            className="primary"
+            disabled={!canSave}
+            onClick={() => finish()}
+          >
+            {continueLabel} <ArrowRight size={17} aria-hidden="true" />
+          </button>
+        </div>
       </footer>
     </section>
   );

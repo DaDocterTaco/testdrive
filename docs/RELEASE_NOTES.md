@@ -1,4 +1,8 @@
-# TESTDRIVE 1.1.0-beta.4
+# TESTDRIVE 1.2.0-beta.1
+
+This release simplifies the home screen, test library, guided checks and report. The automatic scan now ends with a readable device overview. Battery charge and website storage allowance appear only when the browser exposes valid readings; missing data stays unknown. Website quota is explicitly distinguished from disk capacity and free disk space.
+
+Touchscreen checks can fill the screen, with a live 60-area progress indicator, movable controls, Escape/Exit and retained results. Browsers that decline native fullscreen use the visible page viewport. Display tours also enter fullscreen with a viewport fallback. Camera and microphone steps have clearer permission, capture, stopped and assessment states. Mobile, tablet and desktop layouts follow a lighter green visual direction; reports separate attention items from unknowns and keep technical observations expandable.
 
 This update makes an inspection easier to start and completes more checks from observed input. One click starts the automatic scan; saving a result takes the user to the next pending check.
 
@@ -18,7 +22,7 @@ Camera/microphone access starts only after the relevant action. Temporary media 
 
 ## Verification
 
-Beta 4 passed TypeScript, ESLint, all 37 unit tests and the production build. All 19 browser workflows passed in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38674464362). The six affected keyboard/mobile workflows and the complete buyer/report lifecycle also passed against the live HTTPS app. Exact deployed asset hashes, routes, headers and browser security checks passed. Source identities and prior release results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
+The release candidate passed TypeScript, ESLint, all 40 unit tests and the production build. Browser, design and public deployment verification are recorded in [verification.md](verification.md) and [design-qa.md](../design-qa.md). Full Chromium is used for browser verification. Earlier beta results retain their own source identities.
 
 Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 

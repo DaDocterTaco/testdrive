@@ -16,7 +16,7 @@ async function fastStart(page: Page): Promise<string> {
     .click();
   await expect(page).toHaveURL(/\/inspect\/[^/]+\/scan/);
   await expect(
-    page.getByText("Your quick scan is saved.", { exact: true }),
+    page.getByText("Your device overview is ready.", { exact: true }),
   ).toBeVisible();
   return page.url().match(/\/inspect\/([^/]+)\//)![1];
 }
@@ -787,13 +787,15 @@ test("guided display tour advances slowly and still requires a human assessment"
   await expect(
     page.getByText("2 / 8 patterns shown", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Pause color tour", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Pause tour", exact: true }).click();
   await page.clock.runFor(8_000);
   await expect(
     page.getByText("2 / 8 patterns shown", { exact: true }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Exit fullscreen", exact: true })
+    .click();
+  await expect(page.locator(".td-display-surface.fullscreen")).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: /^Save & (?:next check|review)/ }),
   ).toBeDisabled();

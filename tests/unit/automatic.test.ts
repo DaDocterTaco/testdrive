@@ -120,3 +120,79 @@ describe("automatic worker lifecycle", () => {
     expect(result.explanation).toContain("does not establish");
   });
 });
+
+describe("bounded device overview readings", () => {
+  it("records battery charge and website storage allowance without claiming disk capacity", async () => {
+    vi.stubGlobal("navigator", {
+      userAgent: "Synthetic browser",
+      getBattery: async () => ({ level: 0.72, charging: true }),
+      storage: {
+        estimate: async () => ({
+          quota: 512 * 1024 ** 2,
+          usage: 8 * 1024 ** 2,
+        }),
+      },
+    });
+    const result = await runAutomatic("SYS-01", new AbortController().signal);
+    expect(result.status).toBe("completed");
+    expect(result.facts.find((f) => f.key === "battery.level")).toMatchObject({
+      value: 72,
+      source: "browser_reported",
+      unit: "%",
+    });
+    expect(
+      result.facts.find((f) => f.key === "browser_storage_quota"),
+    ).toMatchObject({ value: 512, source: "browser_reported", unit: "MiB" });
+    expect(
+      result.facts.find((f) => f.key === "browser_storage_quota")
+        ?.qualification,
+    ).toContain("not physical disk capacity");
+    expect(
+      result.facts.find((f) => f.key === "browser_storage_usage")?.value,
+    ).toBe(8);
+  });
+  it("keeps absent, rejected and invalid optional readings unknown", async () => {
+    for (const optional of [
+      {},
+      {
+        getBattery: async () => {
+          throw new Error("Unavailable");
+        },
+        storage: {
+          estimate: async () => {
+            throw new Error("Unavailable");
+          },
+        },
+      },
+      {
+        getBattery: async () => ({ level: NaN, charging: true }),
+        storage: { estimate: async () => ({ quota: -1, usage: NaN }) },
+      },
+    ]) {
+      vi.stubGlobal("navigator", {
+        userAgent: "Synthetic browser",
+        ...optional,
+      });
+      const result = await runAutomatic("SYS-01", new AbortController().signal);
+      expect(result.status).toBe("completed");
+      expect(
+        result.facts.filter((f) => /^(battery\.|browser_storage_)/.test(f.key)),
+      ).toEqual([]);
+    }
+  });
+  it("bounds optional APIs that never resolve so the scan can continue", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("navigator", {
+      userAgent: "Synthetic browser",
+      getBattery: () => new Promise(() => {}),
+      storage: { estimate: () => new Promise(() => {}) },
+    });
+    const pending = runAutomatic("SYS-01", new AbortController().signal);
+    await vi.advanceTimersByTimeAsync(1201);
+    const result = await pending;
+    expect(result.status).toBe("completed");
+    expect(
+      result.facts.filter((f) => /^(battery\.|browser_storage_)/.test(f.key)),
+    ).toEqual([]);
+  });
+});

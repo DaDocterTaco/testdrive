@@ -420,7 +420,7 @@ test("partial keyboard observations survive sidebar exit and refresh, with disti
   await page
     .getByRole("button", { name: "Exit keyboard test", exact: true })
     .click();
-  await page.getByRole("link", { name: /Review & report/ }).click();
+  await page.getByRole("link", { name: "Finish early" }).click();
   const keyboardResult = page.locator(".result-item").filter({
     has: page.getByRole("heading", { name: "Keyboard", exact: true }),
   });
@@ -492,9 +492,9 @@ test("ordinary keyboard navigation can start an inspection and missing routes re
     .focus();
   await page.keyboard.press("Enter");
   await expect(
-    page.getByText("Your quick scan is saved.", { exact: true }),
+    page.getByText("Your device overview is ready.", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: /Device & setup/ }).click();
+  await page.getByRole("link", { name: "Change device or checks" }).click();
   await expect(page.getByLabel("Give it a name")).toBeVisible();
   await page.getByLabel("Give it a name").focus();
   await page.keyboard.type("Keyboard navigation example");

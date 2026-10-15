@@ -269,9 +269,26 @@ export function DisplayTest({ onChange }: ModuleProps) {
   const [seen, setSeen] = useState<Set<string>>(new Set());
   const [full, setFull] = useState(false);
   const [fullUsed, setFullUsed] = useState(false);
+  const [viewportUsed, setViewportUsed] = useState(false);
+  const fullRef = useRef(false);
+  const nativeEntered = useRef(false);
+  const fullEpoch = useRef(0);
+  const launchButton = useRef<HTMLButtonElement>(null);
   const [notice, setNotice] = useState("");
   const [started, setStarted] = useState(false);
   const [tour, setTour] = useState(false);
+  function exitDisplay() {
+    fullEpoch.current++;
+    fullRef.current = false;
+    nativeEntered.current = false;
+    setFull(false);
+    setTour(false);
+    if (document.fullscreenElement === surface.current)
+      void document.exitFullscreen().catch(() => {});
+    requestAnimationFrame(() =>
+      launchButton.current?.focus({ preventScroll: true }),
+    );
+  }
   useEffect(() => {
     if (!tour) return;
     const timer = window.setTimeout(() => {
@@ -292,18 +309,64 @@ export function DisplayTest({ onChange }: ModuleProps) {
     };
   }, [tour, index]);
   useEffect(() => {
+    const element = surface.current;
     const change = () => {
-      const active = document.fullscreenElement === surface.current;
-      setFull(active);
-      if (active) setFullUsed(true);
+      const active = document.fullscreenElement === element;
+      if (active) {
+        nativeEntered.current = true;
+        setFullUsed(true);
+        setFull(true);
+        fullRef.current = true;
+      } else if (nativeEntered.current) exitDisplay();
+    };
+    const key = (e: KeyboardEvent) => {
+      if (!fullRef.current) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        exitDisplay();
+      }
+      if (e.key === "Tab") {
+        const buttons = [
+          ...(element?.querySelectorAll<HTMLButtonElement>("button") ?? []),
+        ];
+        const first = buttons[0],
+          last = buttons[buttons.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    const hide = () => {
+      if (document.hidden && fullRef.current) exitDisplay();
     };
     document.addEventListener("fullscreenchange", change);
+    document.addEventListener("keydown", key);
+    document.addEventListener("visibilitychange", hide);
     return () => {
+      fullEpoch.current++;
+      fullRef.current = false;
       document.removeEventListener("fullscreenchange", change);
-      if (document.fullscreenElement === surface.current)
+      document.removeEventListener("keydown", key);
+      document.removeEventListener("visibilitychange", hide);
+      if (document.fullscreenElement === element)
         void document.exitFullscreen().catch(() => {});
     };
   }, []);
+  useEffect(() => {
+    if (!full) return;
+    const bodyOverflow = document.body.style.overflow;
+    const htmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = htmlOverflow;
+    };
+  }, [full]);
   useEffect(() => {
     if (started) setSeen((old) => new Set(old).add(patterns[index].name));
   }, [index, started]);
@@ -321,30 +384,44 @@ export function DisplayTest({ onChange }: ModuleProps) {
         fact("display.pattern_count", "Different patterns shown", seen.size),
         fact(
           "display.fullscreen",
-          "Fullscreen was used",
+          "Native browser fullscreen was used",
           fullUsed,
-          "Fullscreen is optional; browser support varies.",
+          "True only after the browser actually enters fullscreen.",
+        ),
+        fact(
+          "display.viewport_fallback",
+          "Full viewport fallback was used",
+          viewportUsed,
+          "The test fills the visible page; browser controls may remain outside it.",
         ),
       ],
       explanation:
         "The app rendered static test patterns. Only your visual answer can assess persistent dots, discoloration, image retention or unevenness.",
     },
-    [seen, started, fullUsed],
+    [seen, started, fullUsed, viewportUsed],
   );
   async function fullscreen() {
-    if (!surface.current?.requestFullscreen) {
-      setNotice(
-        "Fullscreen is unavailable here. Use the enlarged test area below.",
-      );
+    const element = surface.current;
+    if (!element) return;
+    const token = ++fullEpoch.current;
+    fullRef.current = true;
+    setFull(true);
+    setNotice("");
+    requestAnimationFrame(() =>
+      element
+        .querySelector<HTMLButtonElement>("button")
+        ?.focus({ preventScroll: true }),
+    );
+    if (!element.requestFullscreen) {
+      setViewportUsed(true);
       return;
     }
     try {
-      await surface.current.requestFullscreen();
-      setNotice("");
+      await element.requestFullscreen({ navigationUI: "hide" });
+      if (token !== fullEpoch.current && document.fullscreenElement === element)
+        void document.exitFullscreen().catch(() => {});
     } catch {
-      setNotice(
-        "Fullscreen was not allowed. The enlarged test area remains available.",
-      );
+      if (token === fullEpoch.current) setViewportUsed(true);
     }
   }
   function next() {
@@ -362,6 +439,7 @@ export function DisplayTest({ onChange }: ModuleProps) {
       <div className="td-toolbar">
         <button
           className="primary"
+          ref={launchButton}
           onClick={() => {
             if (tour) {
               setTour(false);
@@ -371,11 +449,12 @@ export function DisplayTest({ onChange }: ModuleProps) {
             setIndex(0);
             setNotice("");
             setTour(true);
+            void fullscreen();
           }}
         >
           {tour ? "Pause color tour" : "Start guided color tour"}
         </button>
-        <button className="primary" onClick={() => setStarted(true)}>
+        <button onClick={() => setStarted(true)}>
           {started ? "Pattern test active" : "Show first pattern"}
         </button>
         <button
@@ -399,7 +478,22 @@ export function DisplayTest({ onChange }: ModuleProps) {
         ref={surface}
         className={`td-display-surface ${full ? "fullscreen" : ""}`}
         style={{ background: started ? patterns[index].background : "#edf0ec" }}
+        role={full ? "dialog" : undefined}
+        aria-modal={full ? true : undefined}
+        aria-label={full ? "Fullscreen display check" : undefined}
       >
+        {full && (
+          <div className="td-display-progress">
+            <strong>
+              {index + 1} / {patterns.length} · {patterns[index].name}
+            </strong>
+            <span>
+              {tour
+                ? "Look for dots, lines or uneven color · changes every 4 seconds"
+                : "Take your time. Choose Next or Exit to review your result."}
+            </span>
+          </div>
+        )}
         {!started && (
           <span className="td-pattern-placeholder">
             Start the guided tour, or show a single pattern
@@ -418,11 +512,7 @@ export function DisplayTest({ onChange }: ModuleProps) {
           <span>{started ? patterns[index].name : "Ready"}</span>
           <button onClick={next}>Next pattern</button>
           {tour && <button onClick={() => setTour(false)}>Pause tour</button>}
-          {full && (
-            <button onClick={() => void document.exitFullscreen()}>
-              Exit fullscreen
-            </button>
-          )}
+          {full && <button onClick={exitDisplay}>Exit fullscreen</button>}
         </div>
       </div>
       <div className="td-pattern-list">
