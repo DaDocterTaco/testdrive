@@ -520,11 +520,8 @@ test("confirmed Zenbook system report selects its US keyboard without converting
   await page
     .getByRole("button", { name: "Delete local data", exact: true })
     .click();
-  expect(
-    await page.evaluate(() =>
-      localStorage.getItem("testdrive-keyboard-profile"),
-    ),
-  ).toBeNull();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("testdrive-keyboard-profile"))).toBeNull();
   const clearedId = await fastStart(page);
   await page.goto(`/inspect/${clearedId}/test/KEY-01`);
   await expect(page.getByLabel("Keyboard model · US English")).toHaveValue(
