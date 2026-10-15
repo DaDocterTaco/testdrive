@@ -2,11 +2,14 @@ import { expect, test } from "@playwright/test";
 import path from "node:path";
 import {
   assertNoHorizontalOverflow,
+  assess,
   downloadReport,
   evidence,
   finishReport,
   importReport,
   startInspection,
+  saveSetup,
+  saveGuided,
   syntheticReport,
 } from "./helpers";
 
@@ -26,46 +29,50 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
     "Synthetic buyer example — no physical device",
   );
   await page.getByRole("button", { name: "Computer", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Run quick scan", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Run quick scan", exact: true })
-    .click();
-  await expect(
-    page.getByText("Your quick scan is saved.", { exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Continue to hands-on checks" })
-    .click();
+  await saveSetup(page);
   await expect(page).toHaveURL(new RegExp(`/inspect/${id}/tests$`));
 
   await page.goto(`/inspect/${id}/test/KEY-01`);
   const keyboard = page.getByRole("group", { name: /^Keyboard test area/ });
-  await keyboard.click();
+  await page
+    .getByRole("button", { name: "Start keyboard test", exact: true })
+    .click();
   await page.keyboard.press("a");
   await page.keyboard.press("b");
   await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
   await expect(keyboard).not.toBeFocused();
+  await expect(page.locator('[data-code="KeyA"]')).toHaveAttribute(
+    "data-key-state",
+    "released",
+  );
+  await expect(page.locator('[data-code="KeyB"]')).toHaveAttribute(
+    "data-key-state",
+    "released",
+  );
   await expect(
-    page.getByText("3 keys received", { exact: true }),
+    page.getByText(/core keys still need a press and release/),
   ).toBeVisible();
-  await expect(page.getByText(/keys remain untested/)).toBeVisible();
-  await page.getByRole("button", { name: "Looks / sounds right" }).click();
+  await assess(page, "Looks / sounds right");
   await evidence(
     page,
     "desktop-keyboard-software-test.png",
     "Automated key events · synthetic buyer example · remaining keys untested",
   );
-  await page.getByRole("button", { name: "Save result" }).click();
+  await saveGuided(page);
 
   // Rendering a display pattern without an answer must not assess its physical condition.
   await page.goto(`/inspect/${id}/test/DISP-01`);
   await expect(
-    page.getByRole("button", { name: "Looks / sounds right" }),
+    page.getByRole("button", {
+      name: "Looks / sounds right",
+      includeHidden: true,
+    }),
   ).toBeDisabled();
   await page.getByRole("button", { name: "Show first pattern" }).click();
   await page.getByRole("button", { name: "Skip this check" }).click();
+  await page.goto(`/inspect/${id}/review`);
   await page.reload();
   await expect(
     page.getByText(
@@ -75,8 +82,8 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
   await page.goto(`/inspect/${id}/test/DISP-01`);
   await page.getByRole("button", { name: "Show first pattern" }).click();
   await page.getByRole("button", { name: "Blue", exact: true }).click();
-  await page.getByRole("button", { name: "Looks / sounds right" }).click();
-  await page.getByRole("button", { name: "Save result" }).click();
+  await assess(page, "Looks / sounds right");
+  await saveGuided(page);
 
   await page.goto(`/inspect/${id}/specs`);
   await page.getByLabel("Claimed installed memory").fill("16 GB");
@@ -176,14 +183,25 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
   );
   if (process.env.TD_E2E_PDF === "1") {
     await page.pdf({
-      path: path.resolve("docs/evidence", page.url().startsWith("https://") ? "production" : ".", "synthetic-browser-print-software-test.pdf"),
+      path: path.resolve(
+        "docs/evidence",
+        page.url().startsWith("https://") ? "production" : ".",
+        "synthetic-browser-print-software-test.pdf",
+      ),
       format: "Letter",
       printBackground: true,
       preferCSSPageSize: true,
       displayHeaderFooter: true,
-      headerTemplate: '<div style="width:100%;font-size:8px;text-align:center;color:#444">TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation</div>',
-      footerTemplate: '<div style="width:100%;font-size:8px;text-align:center;color:#444">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
-      margin: { top: "0.45in", bottom: "0.45in", left: "0.35in", right: "0.35in" },
+      headerTemplate:
+        '<div style="width:100%;font-size:8px;text-align:center;color:#444">TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation</div>',
+      footerTemplate:
+        '<div style="width:100%;font-size:8px;text-align:center;color:#444">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+      margin: {
+        top: "0.45in",
+        bottom: "0.45in",
+        left: "0.35in",
+        right: "0.35in",
+      },
     });
   }
   await page.emulateMedia({ media: "screen" });
@@ -257,10 +275,13 @@ test("camera denial requests access only on action and preserves an unknown resu
     ),
   ).toBe(1);
   await expect(
-    page.getByRole("button", { name: "Looks / sounds right" }),
+    page.getByRole("button", {
+      name: "Looks / sounds right",
+      includeHidden: true,
+    }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Not sure" }).click();
-  await page.getByRole("button", { name: "Save result" }).click();
+  await assess(page, "Not sure");
+  await saveGuided(page);
   const report = await finishReport(page, id);
   const attempt = report.inspection.attempts.find((a) => a.testId === "CAM-01");
   expect(attempt).toMatchObject({
@@ -296,13 +317,11 @@ test("untrusted imports reject malformed and oversized files, and markup is iner
   await expect(page.getByRole("alert")).toContainText(
     "schema version is unsupported",
   );
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "too-large.json",
-      mimeType: "application/json",
-      buffer: Buffer.alloc(5 * 1024 * 1024 + 1, "x"),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "too-large.json",
+    mimeType: "application/json",
+    buffer: Buffer.alloc(5 * 1024 * 1024 + 1, "x"),
+  });
   await expect(page.getByRole("alert")).toContainText("too large");
   const payload =
     '<img src=x onerror="window.__testdrive_xss=1"><script>window.__testdrive_xss=2</script>';
@@ -357,9 +376,7 @@ test("unavailable local storage remains usable and exports without a persistence
   );
   const id = await startInspection(page, "Synthetic ephemeral storage example");
   await expect(page.getByText(/Local storage is unavailable/)).toBeVisible();
-  await page
-    .getByRole("button", { name: "Run quick scan", exact: true })
-    .click();
+  await saveSetup(page);
   const report = await finishReport(page, id);
   expect(report.inspection.nickname).toBe(
     "Synthetic ephemeral storage example",
@@ -376,9 +393,7 @@ test("partial keyboard observations survive sidebar exit and refresh, with disti
   page,
 }) => {
   const id = await startInspection(page, "Synthetic partial recovery example");
-  await page
-    .getByRole("button", { name: "Run quick scan", exact: true })
-    .click();
+  await saveSetup(page);
   await page.getByRole("link", { name: /Run your checks/ }).click();
   await page
     .locator(".inspection-check")
@@ -387,16 +402,26 @@ test("partial keyboard observations survive sidebar exit and refresh, with disti
     })
     .getByRole("button", { name: "Start", exact: true })
     .click();
-  await page.getByRole("group", { name: /^Keyboard test area/ }).click();
+  await page
+    .getByRole("button", { name: "Start keyboard test", exact: true })
+    .click();
   await page.keyboard.press("a");
   await page.keyboard.press("b");
-  await expect(page.getByText("2 keys received", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-code="KeyA"]')).toHaveAttribute(
+    "data-key-state",
+    "released",
+  );
+  await expect(page.locator('[data-code="KeyB"]')).toHaveAttribute(
+    "data-key-state",
+    "released",
+  );
+  await page
+    .getByRole("button", { name: "Exit keyboard test", exact: true })
+    .click();
   await page.getByRole("link", { name: /Review & report/ }).click();
-  const keyboardResult = page
-    .locator(".result-item")
-    .filter({
-      has: page.getByRole("heading", { name: "Keyboard", exact: true }),
-    });
+  const keyboardResult = page.locator(".result-item").filter({
+    has: page.getByRole("heading", { name: "Keyboard", exact: true }),
+  });
   await expect(keyboardResult).toContainText(
     "Partial browser observations are retained.",
   );
@@ -421,18 +446,34 @@ test("partial keyboard observations survive sidebar exit and refresh, with disti
   ).toHaveLength(2);
   await page.goto(`/inspect/${id}/test/KEY-01`);
   const retest = page.getByRole("group", { name: /^Keyboard test area/ });
+  await page
+    .getByRole("button", { name: "Start keyboard test", exact: true })
+    .click();
   await retest.dispatchEvent("keydown", { key: "é", code: "", bubbles: true });
   await retest.dispatchEvent("keyup", { key: "é", code: "", bubbles: true });
-  await expect(page.getByText("1 keys received", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Not sure" }).click();
-  await page.getByRole("button", { name: "Save result" }).click();
+  await expect(page.locator(".td-live")).toContainText("é");
+  await page
+    .getByRole("button", { name: "Exit keyboard test", exact: true })
+    .click();
+  await assess(page, "Not sure");
+  await saveGuided(page);
   const updated = await finishReport(page, id);
-  const retakes = updated.inspection.attempts.filter((attempt) => attempt.testId === "KEY-01");
+  const retakes = updated.inspection.attempts.filter(
+    (attempt) => attempt.testId === "KEY-01",
+  );
   expect(retakes).toHaveLength(2);
   const fallback = retakes.at(-1)!;
-  expect(fallback.facts.find((f) => f.key === "keyboard.distinct")?.value).toBe(0);
-  expect(fallback.facts.find((f) => f.key === "keyboard.fallbacks")?.value).toBe(1);
-  expect(fallback.facts.filter((f) => f.key.startsWith("keyboard.key.")).map((f) => f.key)).toEqual(["keyboard.key.Unidentified-e9"]);
+  expect(fallback.facts.find((f) => f.key === "keyboard.distinct")?.value).toBe(
+    0,
+  );
+  expect(
+    fallback.facts.find((f) => f.key === "keyboard.fallbacks")?.value,
+  ).toBe(1);
+  expect(
+    fallback.facts
+      .filter((f) => f.key.startsWith("keyboard.key."))
+      .map((f) => f.key),
+  ).toEqual(["keyboard.key.Unidentified-e9"]);
   expect(fallback.finding).toBe("not_assessed");
 });
 
@@ -448,6 +489,10 @@ test("ordinary keyboard navigation can start an inspection and missing routes re
     .getByRole("button", { name: "Start inspection", exact: true })
     .focus();
   await page.keyboard.press("Enter");
+  await expect(
+    page.getByText("Your quick scan is saved.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: /Device & setup/ }).click();
   await expect(page.getByLabel("Give it a name")).toBeVisible();
   await page.getByLabel("Give it a name").focus();
   await page.keyboard.type("Keyboard navigation example");

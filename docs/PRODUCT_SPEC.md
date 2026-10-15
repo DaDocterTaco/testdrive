@@ -12,10 +12,10 @@ Primary users are people inspecting a used device and owners investigating a sus
 
 ## Inspection workflow
 
-1. Open TESTDRIVE on the device to inspect. Start without an account or a permission prompt.
-2. Correct the proposed device class if needed, choose a purpose, add an optional nickname, and select appropriate checks. Keyboard and touch checks can coexist on a hybrid device.
-3. Explicitly start the quick scan. Profile collection, processing, and graphics checks run sequentially, with actual progress, bounded workloads, stop controls, and interruption handling.
-4. Complete guided checks with one clear task at a time. Real events and human answers remain separate. Skip, retry, finish early, or revisit a test without fabricating a pass.
+1. Open TESTDRIVE on the device to inspect. One **Start inspection** action begins the automatic scan without an account or a media permission prompt.
+2. Profile collection, processing, and graphics checks run sequentially with actual progress, bounded workloads, stop controls, and interruption handling. The finished scan opens the next pending guided check.
+3. Optionally change the proposed device class, purpose, nickname, keyboard profile, or selected checks under Device & setup. Keyboard and touch checks can coexist on a hybrid device. Saving setup after a completed scan does not repeat the scan unnecessarily.
+4. Complete guided checks with one clear task at a time. Matching input events and bounded media observations can complete an automatic assessment; optional human answers remain separate. Saving continues to the next pending check. Skip, retry, finish early, or revisit a test without fabricating a pass.
 5. Optionally import supported exact specifications locally and compare specific seller claims.
 6. Review observations, attention items, unknowns, and next steps. Finalize a versioned local report, export/import JSON, or use the browser's Print / Save PDF service.
 
@@ -38,15 +38,22 @@ Execution state and finding are separate. Attempts can complete, be skipped, be 
 | SYS-01 | Device profile | Qualified browser/OS family, CSS dimensions, logical processor/memory hints when exposed, renderer and API availability |
 | PERF-01 | Processing sample | One background worker, fixed deterministic xorshift computation, warmup, iteration count, verified checksum, measured active duration; stop/visibility/time bounds |
 | GFX-01 | Graphics rendering | Small known WebGL scene, actual pixel readback, observed frames/interval; release GPU resources |
-| KEY-01 | Keyboard | Physical key codes and release events received within a focused test area; unpressed/intercepted keys remain untested |
-| PTR-01 | Pointer | Movement, primary/secondary/double clicks, wheel events, and target drag; selected mouse/trackpad source is user-provided |
+| KEY-01 | Keyboard | Explicit capture, model-specific US reference, physical key press/release events, per-key progress and core-key completion. Triple Escape, mouse Exit, 60-second inactivity and focus-loss exits release capture. Only shortcuts delivered to the page can be suppressed |
+| PTR-01 | Pointer | Eight-stage challenge: move to two targets, primary/double/secondary click, scroll down/up, and target drag. Matching events complete each stage automatically; selected mouse/trackpad source is user-provided |
 | TOUCH-01 | Touch | Actual touch pointer coverage in a 6×10 visible grid and maximum observed simultaneous touches; resizing resets grid geometry |
-| CAM-01 | Camera | Intentional stream access, available source switching, preview, stream settings, observed frames, temporary capture, human judgement |
-| MIC-01 | Microphone | Intentional input, qualified level observations, bounded local recording and playback when supported, human judgement |
+| CAM-01 | Camera | Intentional four-second local sample, observed frames, brightness/change observations, automatic stop, optional source switching and human quality judgement |
+| MIC-01 | Microphone | Intentional five-second phrase sample, input/silence/clipping observations, automatic stop, local playback and optional human judgement. Installed on-device recognition may verify words; sound detection does not establish a phrase match |
 | SPK-01 | Speakers | User-triggered low-volume left/right/both tones or spoken sample, selected intended output, human confirmation |
-| DISP-01 | Display | Static colors/gradient/checkerboard, optional fullscreen with exit, human visual confirmation; no automatic defect detection |
+| PWR-01 | Battery & charger | Available browser charge/charging readings, optional one-minute charger-state-change observation; no battery-health estimate |
+| DISP-01 | Display | Static colors/gradient/checkerboard, optional four-seconds-per-pattern guided tour with pause, optional fullscreen with exit, human visual confirmation; no automatic defect detection |
 
 Test UI covers only browser-visible areas. Browser and operating-system shortcuts, firmware keys, hidden display regions, Bluetooth routes, and unavailable media devices have explicit limits.
+
+## Laptop reference database
+
+The bundled, local catalog starts with ASUS Zenbook DUO UX8406CA, Apple MacBook Air 13-inch M2 (2022), Dell XPS 13 9315, and Lenovo ThinkPad T14 Gen 4. Each includes an English US keyboard drawing and manufacturer reference links. Specific confirmed imported model identifiers can select a reference automatically. Manual selection and a local model-name lookup are also available; a selected preference is remembered for the next computer inspection and removed by Clear local data.
+
+The page cannot independently discover an exact laptop model from a desktop browser identity. A reference profile never turns typical model specifications into measured RAM, CPU, storage, or other configuration claims. A remembered selection remains user-provided. Hardware variants, replacement keyboards, non-US layouts and remapped keys may differ. See [device-catalog.md](device-catalog.md).
 
 ## Exact specifications and claim comparison
 
@@ -56,10 +63,10 @@ Comparisons require compatible exact fields from an imported report. Browser mem
 
 ## Records and privacy
 
-- R0 has no accounts, cloud inspection database, analytics, ads, or model API calls.
+- This beta has no accounts, cloud inspection database, analytics, ads, or model API calls. Its model catalog is distributed with the static app.
 - Normalized inspections and report revisions use IndexedDB; when unavailable, a visible in-memory fallback preserves the current visit. Browser storage is not a backup.
 - Save meaningful normalized progress. Resume does not restart media automatically.
-- Camera/microphone permission is requested only for the specific action. Temporary captures and audio remain in memory and are released when leaving the test.
+- Camera/microphone permission is requested only for the specific action. Capture stops automatically after the bounded sample, or on cancellation/navigation. Temporary captures and audio remain in memory and are released when leaving the test. Speech recognition uses installed on-device support only; no cloud transcription fallback is used.
 - JSON import is versioned, size-bounded (5 MiB), and validated. Unknown schemas/fields and malformed content are rejected with an explanation.
 - Delete individual records or clear all local data. Previously downloaded files are separate copies and require deletion by their owner.
 - Firebase Hosting receives ordinary website requests and may retain provider access logs. The app does not upload normalized inspections, imports, recordings, or captures to an application backend.

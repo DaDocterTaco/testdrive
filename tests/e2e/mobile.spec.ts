@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
 import {
   assertNoHorizontalOverflow,
+  assess,
   evidence,
   finishReport,
   startInspection,
+  saveSetup,
+  saveGuided,
 } from "./helpers";
 
 test("iPhone viewport emulation adapts navigation, touch plan and mobile report without layout overflow", async ({
@@ -29,13 +32,13 @@ test("iPhone viewport emulation adapts navigation, touch plan and mobile report 
   ).not.toBeChecked();
   await page.getByRole("button", { name: "Computer", exact: true }).click();
   await expect(page.getByLabel("Keyboard", { exact: true })).toBeChecked();
-  await expect(page.getByLabel("Mouse & trackpad", { exact: true })).toBeChecked();
+  await expect(
+    page.getByLabel("Mouse & trackpad", { exact: true }),
+  ).toBeChecked();
   await expect(page.getByLabel("Touchscreen", { exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Phone", exact: true }).click();
   await assertNoHorizontalOverflow(page);
-  await page
-    .getByRole("button", { name: "Run quick scan", exact: true })
-    .click();
+  await saveSetup(page);
   await page.getByRole("link", { name: /Run your checks/ }).click();
   await page
     .locator(".inspection-check")
@@ -64,8 +67,8 @@ test("iPhone viewport emulation adapts navigation, touch plan and mobile report 
     "iphone-touch-viewport-emulation.png",
     "iPhone viewport EMULATION · synthetic touch event · no physical panel validation",
   );
-  await page.getByRole("button", { name: "Not sure" }).click();
-  await page.getByRole("button", { name: "Save result" }).click();
+  await assess(page, "Not sure");
+  await saveGuided(page);
   const report = await finishReport(page, id);
   expect(report.inspection.deviceClass).toBe("phone");
   expect(
@@ -98,7 +101,13 @@ test("iPhone viewport emulation adapts navigation, touch plan and mobile report 
   await assertNoHorizontalOverflow(page);
   await page.getByRole("link", { name: "Test library", exact: true }).click();
   await assertNoHorizontalOverflow(page);
-  await page.locator(".test-card").filter({ has: page.getByRole("heading", { name: "Touchscreen", exact: true }) }).getByRole("button", { name: "Run check" }).click();
+  await page
+    .locator(".test-card")
+    .filter({
+      has: page.getByRole("heading", { name: "Touchscreen", exact: true }),
+    })
+    .getByRole("button", { name: "Run check" })
+    .click();
   await expect(page.locator(".td-touch-grid")).toBeVisible();
   await assertNoHorizontalOverflow(page);
   await page.getByRole("link", { name: /Device & setup/ }).click();

@@ -271,6 +271,26 @@ export function DisplayTest({ onChange }: ModuleProps) {
   const [fullUsed, setFullUsed] = useState(false);
   const [notice, setNotice] = useState("");
   const [started, setStarted] = useState(false);
+  const [tour, setTour] = useState(false);
+  useEffect(() => {
+    if (!tour) return;
+    const timer = window.setTimeout(() => {
+      if (index === patterns.length - 1) {
+        setTour(false);
+        setNotice(
+          "All eight patterns have been shown. Record whether you noticed any dots, lines, or uneven colors below.",
+        );
+      } else setIndex((value) => value + 1);
+    }, 4000);
+    const pause = () => {
+      if (document.hidden) setTour(false);
+    };
+    document.addEventListener("visibilitychange", pause);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", pause);
+    };
+  }, [tour, index]);
   useEffect(() => {
     const change = () => {
       const active = document.fullscreenElement === surface.current;
@@ -328,17 +348,33 @@ export function DisplayTest({ onChange }: ModuleProps) {
     }
   }
   function next() {
+    setTour(false);
     setStarted(true);
     setIndex((i) => (i + 1) % patterns.length);
   }
   return (
     <div className="td-module">
       <p>
-        Inspect each static pattern for persistent dots, discoloration and
-        unevenness. Change patterns at your own pace. The app cannot see your
-        physical display.
+        Look for dots that stay in the same place, lines, or uneven color. Use
+        the guided tour to show each pattern for four seconds, or change them
+        yourself. You decide how the screen looks.
       </p>
       <div className="td-toolbar">
+        <button
+          className="primary"
+          onClick={() => {
+            if (tour) {
+              setTour(false);
+              return;
+            }
+            setStarted(true);
+            setIndex(0);
+            setNotice("");
+            setTour(true);
+          }}
+        >
+          {tour ? "Pause color tour" : "Start guided color tour"}
+        </button>
         <button className="primary" onClick={() => setStarted(true)}>
           {started ? "Pattern test active" : "Show first pattern"}
         </button>
@@ -366,12 +402,13 @@ export function DisplayTest({ onChange }: ModuleProps) {
       >
         {!started && (
           <span className="td-pattern-placeholder">
-            Choose “Show first pattern” to begin
+            Start the guided tour, or show a single pattern
           </span>
         )}
         <div className="td-pattern-controls">
           <button
             onClick={() => {
+              setTour(false);
               setStarted(true);
               setIndex((i) => (i + patterns.length - 1) % patterns.length);
             }}
@@ -380,6 +417,7 @@ export function DisplayTest({ onChange }: ModuleProps) {
           </button>
           <span>{started ? patterns[index].name : "Ready"}</span>
           <button onClick={next}>Next pattern</button>
+          {tour && <button onClick={() => setTour(false)}>Pause tour</button>}
           {full && (
             <button onClick={() => void document.exitFullscreen()}>
               Exit fullscreen
@@ -393,6 +431,7 @@ export function DisplayTest({ onChange }: ModuleProps) {
             key={p.name}
             className={started && index === i ? "active" : ""}
             onClick={() => {
+              setTour(false);
               setStarted(true);
               setIndex(i);
             }}
@@ -404,9 +443,10 @@ export function DisplayTest({ onChange }: ModuleProps) {
         ))}
       </div>
       <p className="td-help">
-        There is no flashing or automatic color cycling. The test covers the
-        area the browser renders; hidden browser and system UI are outside it.
-        Use Escape or the visible Exit fullscreen control to leave fullscreen.
+        The optional tour changes color once every four seconds and can be
+        paused at any time. The test covers the area the browser renders; hidden
+        browser and system UI are outside it. Use Escape or the visible Exit
+        fullscreen control to leave fullscreen.
       </p>
     </div>
   );

@@ -108,6 +108,14 @@ export const TESTS: TestDefinition[] = [
     duration: "30–60 seconds",
   },
   {
+    id: "PWR-01",
+    title: "Battery & charger",
+    description: "See reported charge and check whether connecting power changes the charging state.",
+    mode: "guided",
+    group: "performance",
+    duration: "30–60 seconds",
+  },
+  {
     id: "DISP-01",
     title: "Display",
     description: "Inspect static colors for visible spots or unevenness.",

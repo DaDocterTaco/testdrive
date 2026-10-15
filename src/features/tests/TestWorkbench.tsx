@@ -8,6 +8,7 @@ import type {
 import { KeyboardTest, PointerTest, TouchTest } from "./InputTests";
 import { CameraTest, MicrophoneTest } from "./MediaTests";
 import { DisplayTest, SpeakerTest } from "./OutputTests";
+import { PowerTest } from "./PowerTest";
 import { fact, uid } from "./shared";
 import type { Evidence } from "./shared";
 import "./workbench.css";
@@ -18,6 +19,9 @@ interface Props {
   onProgress?: (attempt: TestAttempt) => void;
   onExit: () => void;
   deviceClass: DeviceClass;
+  profileId?: string;
+  onProfileChange?: (id: string) => void;
+  continueLabel?: string;
 }
 const definitions: Partial<
   Record<
@@ -31,48 +35,54 @@ const definitions: Partial<
   >
 > = {
   "KEY-01": {
-    title: "Every key. A little certainty.",
+    title: "Press your keyboard’s keys.",
     eyebrow: "Keyboard check",
     prompt: "Did the keys you tested respond as expected?",
     component: KeyboardTest,
   },
   "PTR-01": {
-    title: "Make your next move.",
+    title: "Follow the mouse challenge.",
     eyebrow: "Mouse & trackpad check",
     prompt: "Did your pointer, buttons and scrolling feel right?",
     component: PointerTest,
   },
   "TOUCH-01": {
-    title: "Leave no area untouched.",
+    title: "Touch each square.",
     eyebrow: "Touchscreen check",
     prompt: "Did the touch areas and gestures you tested respond correctly?",
     component: TouchTest,
   },
   "CAM-01": {
-    title: "A clearer picture.",
+    title: "Let’s check your camera.",
     eyebrow: "Camera check",
     prompt: "Does the camera picture look clear, without visible issues?",
     component: CameraTest,
   },
   "MIC-01": {
-    title: "Make yourself heard.",
+    title: "Say a short phrase.",
     eyebrow: "Microphone check",
     prompt: "After playback, did your voice sound clear?",
     component: MicrophoneTest,
   },
   "SPK-01": {
-    title: "Listen a little closer.",
+    title: "Listen to the test sounds.",
     eyebrow: "Speaker check",
     prompt:
       "Did the sound you heard seem clear and come from the intended output?",
     component: SpeakerTest,
   },
   "DISP-01": {
-    title: "Look at the whole picture.",
+    title: "Look for spots or uneven colors.",
     eyebrow: "Display check",
     prompt:
       "Did the patterns look even, without persistent dots or discoloration?",
     component: DisplayTest,
+  },
+  "PWR-01": {
+    title: "Check battery and power.",
+    eyebrow: "Battery & charger check",
+    prompt: "Did the charger connect as expected?",
+    component: PowerTest,
   },
 };
 export function TestWorkbench(props: Props) {
@@ -84,6 +94,9 @@ function TestSession({
   onProgress,
   onExit,
   deviceClass,
+  profileId,
+  onProfileChange,
+  continueLabel = "Save result",
 }: Props) {
   const [evidence, setEvidence] = useState<Evidence>({ facts: [] });
   const [note, setNote] = useState("");
@@ -105,7 +118,7 @@ function TestSession({
       return {
         id: attemptId.current,
         testId,
-        testVersion: testId === "KEY-01" ? "1.0.1" : "1.0.0",
+        testVersion: "1.1.0",
         status: status === "running" ? (current.status ?? status) : status,
         startedAt: started.current,
         ...(status === "interrupted"
@@ -221,15 +234,18 @@ function TestSession({
     onComplete({
       id: attemptId.current,
       testId,
-      testVersion: testId === "KEY-01" ? "1.0.1" : "1.0.0",
+      testVersion: "1.1.0",
       status: actualStatus,
       startedAt: started.current,
       endedAt: new Date().toISOString(),
       facts: [...evidence.facts, ...humanFact],
       finding:
-        human === "issue"
+        human === "issue" ||
+        (evidence.automatic?.attention && actualStatus === "completed")
           ? "attention"
-          : human === "looks_good" && actualStatus === "completed"
+          : (human === "looks_good" ||
+                (evidence.automatic?.complete && human !== "not_sure")) &&
+              actualStatus === "completed"
             ? "observed"
             : "not_assessed",
       ...(human ? { humanAnswer: human } : {}),
@@ -248,7 +264,7 @@ function TestSession({
             : (evidence.explanation ??
               "A hands-on check was completed with your assessment."),
       nextStep:
-        human === "issue"
+        human === "issue" || evidence.automatic?.attention
           ? "Repeat the check, confirm your input or output source, and discuss a persistent issue with the seller or a repair professional."
           : human === "not_sure"
             ? "Repeat this check or ask someone to help assess it."
@@ -266,7 +282,7 @@ function TestSession({
     >
       <header className="td-workbench-heading">
         <div>
-          <span className="td-eyebrow">Hands-on · {definition.eyebrow}</span>
+          <span className="td-eyebrow">{definition.eyebrow}</span>
           <h2>{definition.title}</h2>
         </div>
         <button
@@ -279,8 +295,34 @@ function TestSession({
           ×
         </button>
       </header>
-      <Module onChange={receive} />
-      <div className="td-assessment">
+      <Module
+        onChange={receive}
+        profileId={profileId}
+        onProfileChange={onProfileChange}
+      />
+      {evidence.automatic?.complete && !evidence.status && (
+        <div
+          className={`td-automatic-result ${evidence.automatic.attention ? "attention" : ""}`}
+          role="status"
+        >
+          <strong>
+            {evidence.automatic.attention
+              ? "Something needs a closer look"
+              : "Your result is ready"}
+          </strong>
+          <p>{evidence.automatic.summary}</p>
+          <small>
+            You can continue now. Add your own assessment below if you noticed a
+            problem.
+          </small>
+        </div>
+      )}
+      <details className="td-assessment" open={!evidence.automatic}>
+        <summary>
+          {evidence.automatic
+            ? "Add your feedback (optional)"
+            : "How did it look or feel?"}
+        </summary>
         <h3>{definition.prompt}</h3>
         <p>
           Your answer is recorded separately from the browser’s observations.
@@ -306,28 +348,40 @@ function TestSession({
             ? Not sure
           </button>
         </div>
-        <label className="td-note-label">
-          Optional note
-          <textarea
-            maxLength={2000}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Anything you want to remember about this check"
-            rows={2}
-          />
-        </label>
-      </div>
+        <details className="td-note-details">
+          <summary>Add a note</summary>
+          <label className="td-note-label">
+            Optional note
+            <textarea
+              maxLength={2000}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Anything you want to remember about this check"
+              rows={2}
+            />
+          </label>
+        </details>
+      </details>
+      {evidence.automatic &&
+        !evidence.automatic.complete &&
+        evidence.ready &&
+        !answer && (
+          <p className="td-save-hint">
+            Some input was received. Finish the remaining steps, or add your
+            feedback above to save a partial check. You can also skip for now.
+          </p>
+        )}
       <footer className="td-workbench-footer">
         <button onClick={() => finish("skipped")}>Skip this check</button>
         <button
           className="primary"
           disabled={
-            !answer ||
+            (!answer && (!evidence.automatic?.complete || !!evidence.status)) ||
             (answer === "looks_good" && (!evidence.ready || !!evidence.status))
           }
           onClick={() => finish()}
         >
-          Save result <span aria-hidden="true">→</span>
+          {continueLabel} <span aria-hidden="true">→</span>
         </button>
       </footer>
     </section>

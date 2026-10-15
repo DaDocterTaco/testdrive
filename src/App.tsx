@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   AudioLines,
+  BatteryCharging,
   Camera,
   Check,
   CheckCircle2,
@@ -82,6 +83,15 @@ import {
 } from "./imports";
 import TestWorkbench from "./features/tests/TestWorkbench";
 import { validateInspection } from "./schemas";
+import { DeviceProfilePanel } from "./devices/DeviceProfilePanel";
+import { matchDeviceProfile } from "./devices/catalog";
+import {
+  inspectionProfile,
+  chooseInspectionProfile,
+  preferredKeyboardProfile,
+  rememberKeyboardProfile,
+} from "./devices/selection";
+import "./experience.css";
 
 const icons: Record<TestId, LucideIcon> = {
   "SYS-01": Laptop,
@@ -93,6 +103,7 @@ const icons: Record<TestId, LucideIcon> = {
   "CAM-01": Camera,
   "MIC-01": AudioLines,
   "SPK-01": Volume2,
+  "PWR-01": BatteryCharging,
   "DISP-01": Monitor,
 };
 const sources: Record<Fact["source"], string> = {
@@ -125,8 +136,7 @@ function counts(i: Inspection) {
       (x) =>
         !x ||
         x.finding === "not_assessed" ||
-        (TESTS.find((t) => t.id === x.testId)?.mode === "guided" &&
-          (!x.humanAnswer || x.humanAnswer === "not_sure")) ||
+        x.humanAnswer === "not_sure" ||
         x.facts.some(
           (f) =>
             ["keyboard.untested", "touch.uncovered"].includes(f.key) &&
@@ -240,27 +250,35 @@ function useStart() {
                   ["KEY-01", "PTR-01"].includes(t.id) &&
                   d.deviceClass !== "computer"
                 ) &&
-                  !(t.id === "TOUCH-01" && !d.capabilities.touch)),
+                  !(t.id === "TOUCH-01" && !d.capabilities.touch) &&
+                  !(
+                    t.id === "PWR-01" &&
+                    (d.deviceClass !== "computer" ||
+                      !("getBattery" in navigator))
+                  )),
             ).map((t) => t.id);
-        const i: Inspection = {
+        let i: Inspection = {
           schemaVersion: 1,
           id: crypto.randomUUID(),
           appVersion: APP_VERSION,
           deviceClass: d.deviceClass,
-          purpose: "buying_used",
+          purpose: "checking_device",
           createdAt: now,
           updatedAt: now,
           profileFacts: d.facts,
           sellerClaims: [],
           attempts: [],
           selectedTestIds: selected,
-          state: "setup",
+          state: "ready",
         };
+        const preference = preferredKeyboardProfile();
+        if (preference && d.deviceClass === "computer")
+          i = chooseInspectionProfile(i, preference);
         await saveInspection(i);
         navigate(
           specific
-            ? `/inspect/${i.id}/${TESTS.find((t) => t.id === specific)?.mode === "automatic" ? "scan" : `test/${specific}`}`
-            : `/inspect/${i.id}/setup`,
+            ? `/inspect/${i.id}/${TESTS.find((t) => t.id === specific)?.mode === "automatic" ? "scan?start=1" : `test/${specific}`}`
+            : `/inspect/${i.id}/scan?start=1`,
         );
       } finally {
         setBusy(false);
@@ -375,9 +393,9 @@ function Home() {
             <span>No guesswork.</span>
           </h1>
           <p className="hero-description">
-            Know the device before you buy it. Check the essentials, see what
-            needs attention, and leave with a report you can actually
-            understand.
+            Start once. We run the quick checks, then guide you through the
+            rest—one simple task at a time. Get a clear report of what responded
+            and what needs a closer look.
           </p>
           <div className="hero-actions">
             <button
@@ -391,6 +409,9 @@ function Home() {
               Explore the tests <ChevronRight size={16} />
             </Link>
           </div>
+          <p className="start-explainer">
+            Starts a short browser scan. Camera and microphone ask separately.
+          </p>
           <div className="hero-trust">
             <span>
               <Check size={15} /> No account needed
@@ -478,7 +499,7 @@ function Home() {
             <h2>A proper check. Without the technical degree.</h2>
           </div>
           <Link className="text-button" to="/tests">
-            See all 10 checks <ArrowRight size={16} />
+            See all {TESTS.length} checks <ArrowRight size={16} />
           </Link>
         </div>
         <div className="category-grid">
@@ -492,7 +513,7 @@ function Home() {
             {
               icon: Camera,
               title: "Seen and heard.",
-              copy: "Try the cameras, record your voice, and listen to the speakers.",
+              copy: "Get automatic camera and microphone feedback, then listen to your speakers.",
               tag: "CAMERA & AUDIO",
             },
             {
@@ -504,7 +525,7 @@ function Home() {
             {
               icon: Cpu,
               title: "Under the surface.",
-              copy: "See browser observations and add exact specs from a system report.",
+              copy: "Run a quick scan, check charging, and match your laptop’s keyboard profile.",
               tag: "PERFORMANCE & SPECS",
             },
           ].map((c) => (
@@ -721,7 +742,9 @@ function InspectionShell() {
   const c = counts(i);
   return (
     <InspectionContext.Provider value={{ inspection: i, update }}>
-      <div className="page inspection-page">
+      <div
+        className={`page inspection-page ${current === "test" ? "guided-page" : ""}`}
+      >
         <div className="inspection-topline">
           <Link to="/reports" className="text-button">
             <ArrowLeft size={15} /> Your inspections
@@ -826,7 +849,10 @@ function Setup() {
       ...n,
       deviceClass: v,
       selectedTestIds: TESTS.filter(
-        (t) => t.id !== "TOUCH-01" || detectDevice().capabilities.touch,
+        (t) =>
+          (t.id !== "TOUCH-01" || detectDevice().capabilities.touch) &&
+          (t.id !== "PWR-01" ||
+            (v === "computer" && "getBattery" in navigator)),
       )
         .filter((t) => v === "computer" || !["KEY-01", "PTR-01"].includes(t.id))
         .map((t) => t.id),
@@ -837,12 +863,14 @@ function Setup() {
       setSaving(false);
       return;
     }
-    navigate(`/inspect/${i.id}/scan`);
+    navigate(
+      `/inspect/${i.id}/${i.attempts.some((a) => a.testId === "SYS-01") ? "tests" : "scan?start=1"}`,
+    );
   };
   return (
     <>
       <div className="panel-heading">
-        <h2>First, get to know your device.</h2>
+        <h2>Make this inspection yours.</h2>
         <p>
           A few details help us tailor the inspection. You can change these
           anytime.
@@ -902,6 +930,9 @@ function Setup() {
           onChange={(e) => setN({ ...n, nickname: e.target.value })}
         />
       </section>
+      {n.deviceClass === "computer" && (
+        <DeviceProfilePanel inspection={n} onChange={setN} />
+      )}
       <section className="panel">
         <div className="panel-title">
           <h3>Your inspection plan</h3>
@@ -942,7 +973,10 @@ function Setup() {
           disabled={saving || !n.selectedTestIds.length}
           onClick={submit}
         >
-          Run quick scan <ArrowRight size={17} />
+          {i.attempts.some((a) => a.testId === "SYS-01")
+            ? "Save & continue"
+            : "Run quick scan"}{" "}
+          <ArrowRight size={17} />
         </button>
       </div>
     </>
@@ -952,11 +986,13 @@ function Setup() {
 function QuickScan() {
   const { inspection: i, update } = useInspection();
   const navigate = useNavigate();
+  const location = useLocation();
   const [running, setRunning] = useState(false);
   const [current, setCurrent] = useState<TestId>();
   const [finished, setFinished] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const controller = useRef<AbortController | undefined>(undefined);
+  const scanRef = useRef<() => void>(() => {});
   const latestI = useRef(i);
   latestI.current = i;
   const auto = i.selectedTestIds.filter(
@@ -964,11 +1000,21 @@ function QuickScan() {
   );
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
+    if (!new URLSearchParams(location.search).has("start")) return;
+    const timer = setTimeout(() => {
+      navigate(location.pathname, { replace: true });
+      scanRef.current();
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [location.pathname, location.search, navigate]);
+  useEffect(() => {
     if (!running) return;
     const timer = window.setInterval(() => setElapsed((x) => x + 1), 1000);
     return () => clearInterval(timer);
   }, [running]);
   const scan = async () => {
+    if (controller.current && !controller.current.signal.aborted && running)
+      return;
     controller.current = new AbortController();
     setRunning(true);
     setFinished(false);
@@ -994,11 +1040,26 @@ function QuickScan() {
     setRunning(false);
     setFinished(true);
   };
+  scanRef.current = () => {
+    void scan();
+  };
+  const nextGuided = i.selectedTestIds.find(
+    (id) =>
+      TESTS.find((t) => t.id === id)?.mode === "guided" &&
+      (!latest(i, id) ||
+        ["running", "interrupted", "cancelled"].includes(
+          latest(i, id)!.status,
+        )),
+  );
+  const nextTitle = TESTS.find((t) => t.id === nextGuided)?.title;
   return (
     <>
       <div className="panel-heading">
-        <h2>A quick look under the hood.</h2>
-        <p>Real observations from this browser. No permissions needed.</p>
+        <h2>First, we’ll handle the automatic checks.</h2>
+        <p>
+          Sit tight for a few seconds. Then we’ll guide you through one simple
+          task at a time.
+        </p>
       </div>
       <section className="panel scan-panel">
         <div className={`scan-orb ${running ? "scanning" : ""}`}>
@@ -1016,7 +1077,9 @@ function QuickScan() {
           {running
             ? "Keep this tab visible. You can stop at any time."
             : finished
-              ? "Continue with the hands-on checks for a fuller picture."
+              ? nextGuided
+                ? `Next is ${nextTitle?.toLowerCase()}. We’ll show you exactly what to do.`
+                : "Your selected checks are finished. Review your results when you’re ready."
               : "We’ll collect browser information and run short, bounded processing and rendering samples."}
         </p>
         <div className="scan-tasks">
@@ -1052,10 +1115,19 @@ function QuickScan() {
         ) : (
           <button
             className="button primary"
-            onClick={finished ? () => navigate(`/inspect/${i.id}/tests`) : scan}
+            onClick={
+              finished
+                ? () =>
+                    navigate(
+                      `/inspect/${i.id}/${nextGuided ? `test/${nextGuided}` : "review"}`,
+                    )
+                : scan
+            }
           >
             {finished
-              ? "Continue to hands-on checks"
+              ? nextGuided
+                ? `Continue to ${nextTitle?.toLowerCase()}`
+                : "Review results"
               : auto.length
                 ? "Run quick scan"
                 : "Continue without automatic checks"}
@@ -1076,6 +1148,10 @@ function QuickScan() {
           battery wear, certify stability, or assign a device score.
         </p>
       </div>
+      <div className="scan-secondary">
+        <Link to={`/inspect/${i.id}/setup`}>Change device or checks</Link>
+        <Link to={`/inspect/${i.id}/tests`}>See all checks</Link>
+      </div>
     </>
   );
 }
@@ -1084,7 +1160,12 @@ function InspectionTests() {
   const { inspection: i } = useInspection();
   const navigate = useNavigate();
   const next = i.selectedTestIds.find(
-    (id) => !latest(i, id) && TESTS.find((t) => t.id === id)?.mode === "guided",
+    (id) =>
+      (!latest(i, id) ||
+        ["running", "interrupted", "cancelled"].includes(
+          latest(i, id)!.status,
+        )) &&
+      TESTS.find((t) => t.id === id)?.mode === "guided",
   );
   return (
     <>
@@ -1173,7 +1254,21 @@ function Guided() {
   };
   const done = async (a: TestAttempt) => {
     if (!(await record(a))) return;
-    navigate(`/inspect/${i.id}/tests`);
+    if (a.status === "interrupted") {
+      navigate(`/inspect/${i.id}/tests`);
+      return;
+    }
+    const base = currentInspection.current;
+    const remaining = base.selectedTestIds.find(
+      (id) =>
+        id !== a.testId &&
+        TESTS.find((t) => t.id === id)?.mode === "guided" &&
+        (!latest(base, id) ||
+          ["running", "interrupted", "cancelled"].includes(
+            latest(base, id)!.status,
+          )),
+    );
+    navigate(`/inspect/${i.id}/${remaining ? `test/${remaining}` : "review"}`);
   };
   if (!t || t.mode === "automatic")
     return (
@@ -1184,15 +1279,51 @@ function Guided() {
     );
   return (
     <>
-      <div className="panel-heading">
-        <span className="eyebrow">HANDS-ON CHECK</span>
-        <h2>{t.title}</h2>
-        <p>{t.description}</p>
+      <div className="guided-topbar">
+        <Link to={`/inspect/${i.id}/tests`}>
+          <ArrowLeft size={15} /> All checks
+        </Link>
+        <span>
+          {
+            i.selectedTestIds.filter(
+              (id) =>
+                latest(i, id) &&
+                !["running", "interrupted", "cancelled"].includes(
+                  latest(i, id)!.status,
+                ),
+            ).length
+          }{" "}
+          of {i.selectedTestIds.length} checked
+        </span>
+        <Link to={`/inspect/${i.id}/review`}>Finish early</Link>
       </div>
       <TestWorkbench
         key={testId}
         testId={t.id}
         deviceClass={i.deviceClass}
+        profileId={inspectionProfile(i)?.id}
+        onProfileChange={(profileId) => {
+          rememberKeyboardProfile(profileId);
+          const next = chooseInspectionProfile(
+            currentInspection.current,
+            profileId,
+          );
+          currentInspection.current = next;
+          void update(next);
+        }}
+        continueLabel={
+          i.selectedTestIds.some(
+            (id) =>
+              id !== t.id &&
+              TESTS.find((x) => x.id === id)?.mode === "guided" &&
+              (!latest(i, id) ||
+                ["running", "interrupted", "cancelled"].includes(
+                  latest(i, id)!.status,
+                )),
+          )
+            ? "Save & next check"
+            : "Save & review"
+        }
         onComplete={done}
         onProgress={record}
         onExit={() => navigate(`/inspect/${i.id}/tests`)}
@@ -1288,13 +1419,26 @@ function Specs() {
   };
   const apply = async () => {
     if (!preview || !confirmed) return;
-    await update({
+    const match = matchDeviceProfile(
+      String(preview.facts.find((f) => f.key === "manufacturer")?.value ?? ""),
+      String(preview.facts.find((f) => f.key === "model")?.value ?? ""),
+    );
+    const saved = await update({
       ...i,
       profileFacts: [
-        ...i.profileFacts.filter((f) => f.source !== "imported_system_report"),
+        ...i.profileFacts.filter(
+          (f) =>
+            f.source !== "imported_system_report" &&
+            !(
+              match &&
+              ["keyboard_profile_id", "keyboard_profile_name"].includes(f.key)
+            ),
+        ),
         ...preview.facts,
       ],
     });
+    if (!saved) return;
+    if (match) rememberKeyboardProfile(match.profile.id);
     setPreview(undefined);
     setSaved(true);
   };
@@ -1330,6 +1474,14 @@ function Specs() {
           important gaps.
         </p>
       </div>
+      {i.deviceClass === "computer" && (
+        <DeviceProfilePanel
+          inspection={i}
+          onChange={(next) => {
+            void update(next);
+          }}
+        />
+      )}
       <section className="panel">
         <div className="panel-title">
           <h3>
@@ -1716,6 +1868,7 @@ function Reports() {
       ]);
       const all = await listInspections();
       await Promise.all(all.map((x) => deleteInspection(x.id)));
+      rememberKeyboardProfile("");
     } else if (reports.some((r) => r.reportId === id)) {
       await deleteReport(id);
     } else await deleteInspection(id);
@@ -2149,7 +2302,7 @@ function Privacy() {
       {[
         [
           "What is stored",
-          "TESTDRIVE saves normalized device observations, test attempts, your answers, short notes, and finished reports in this browser’s IndexedDB. Random inspection IDs do not identify your hardware. If local storage is unavailable, data is held in memory for this visit and may be lost on refresh.",
+          "TESTDRIVE saves normalized device observations, test attempts, your answers, short notes, and finished reports in this browser’s IndexedDB. Your chosen keyboard profile is remembered in localStorage for future inspections; it does not identify hardware. Random inspection IDs do not identify you. If storage is unavailable, inspection data stays in memory for this visit and may be lost on refresh.",
         ],
         [
           "Camera, microphone, and imports",

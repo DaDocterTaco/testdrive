@@ -2,6 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { fact, mediaError, useEvidence } from "./shared";
 import type { Evidence, ModuleProps } from "./shared";
 import type { Fact } from "../../types";
+import {
+  analyzeAudioSamples,
+  analyzeFrame,
+  createLocalRecognition,
+  matchesMicrophonePhrase,
+  MICROPHONE_PHRASE,
+} from "./mediaAnalysis";
+import type {
+  LocalRecognition,
+  LocalRecognitionConstructor,
+} from "./mediaAnalysis";
+import "./automation.css";
 
 const available = () =>
   !!navigator.mediaDevices?.getUserMedia && window.isSecureContext;
@@ -38,6 +50,18 @@ export function CameraTest({ onChange }: ModuleProps) {
   const [capture, setCapture] = useState("");
   const [captures, setCaptures] = useState(0);
   const [history, setHistory] = useState<Fact[]>([]);
+  const [complete, setComplete] = useState(false);
+  const [remaining, setRemaining] = useState(4);
+  const [brightness, setBrightness] = useState<number | null>(null);
+  const [change, setChange] = useState(0);
+  const [pixelSamples, setPixelSamples] = useState(0);
+  const [frozen, setFrozen] = useState("");
+  const cameraSummary =
+    frames > 0
+      ? brightness !== null && brightness < 0.035
+        ? "Video frames arrived, but the sample was very dark. Check the lens cover and lighting."
+        : "Video frames received. The camera opened and delivered a local video sample."
+      : "No changing video timestamps were received during this sample. Retry with the lens uncovered.";
   function dispose() {
     epoch.current++;
     if (timer.current) {
@@ -48,14 +72,15 @@ export function CameraTest({ onChange }: ModuleProps) {
       clearTimeout(promptTimer.current);
       promptTimer.current = null;
     }
-    stream.current?.getTracks().forEach((t) => t.stop());
+    const previousStream = stream.current;
     stream.current = null;
+    previousStream?.getTracks().forEach((t) => t.stop());
     if (video.current) video.current.srcObject = null;
   }
   useEffect(() => {
     mounted.current = true;
     const hide = () => {
-      if (document.hidden) {
+      if (document.hidden && (stream.current || promptTimer.current)) {
         dispose();
         setRunning(false);
         setBusy(false);
@@ -78,11 +103,38 @@ export function CameraTest({ onChange }: ModuleProps) {
     {
       ...failure,
       ready: frames > 0,
+      automatic: {
+        complete,
+        summary: cameraSummary,
+        attention: frames === 0 || (brightness !== null && brightness < 0.035),
+      },
       facts: [
         ...history,
         fact(
+          "camera.sample_complete",
+          "Four-second automatic camera sample completed",
+          complete,
+        ),
+        fact(
+          "camera.pixel_samples",
+          "Local frame brightness samples",
+          pixelSamples,
+        ),
+        fact(
+          "camera.mean_brightness",
+          "Mean normalized sampled image brightness",
+          brightness === null ? "Not measured" : Number(brightness.toFixed(4)),
+          "Lighting and lens covers affect this observation. This is not a quality score.",
+        ),
+        fact(
+          "camera.frame_change",
+          "Largest normalized difference between sampled frames",
+          Number(change.toFixed(4)),
+          "A still scene may have no change. Changes may be motion, lighting or sensor noise; this does not establish camera quality.",
+        ),
+        fact(
           "camera.frame_observations",
-          "Current-source distinct moving video frame observations",
+          "Current-source advancing video timestamp observations",
           frames,
           "This is evidence of arriving video, not a sensor quality assessment.",
         ),
@@ -131,10 +183,22 @@ export function CameraTest({ onChange }: ModuleProps) {
       explanation: failure.status
         ? error || "The camera check stopped before a final assessment."
         : frames > 0
-          ? "The preview received a real local camera stream. Clarity, spots, blur and lighting require your judgement."
+          ? `${cameraSummary} Clarity, spots, blur and focus require your judgement.`
           : "No moving camera frames have been observed yet. Camera condition remains unassessed.",
     },
-    [failure, frames, settings, captures, sourceLabel, history, error],
+    [
+      failure,
+      frames,
+      settings,
+      captures,
+      sourceLabel,
+      history,
+      error,
+      complete,
+      brightness,
+      change,
+      pixelSamples,
+    ],
   );
   async function start(choice = "") {
     if (frames > 0)
@@ -144,13 +208,19 @@ export function CameraTest({ onChange }: ModuleProps) {
           fact(
             `camera.previous_source.${old.length + 1}`,
             "Previously observed camera stream",
-            `${sourceLabel.slice(0, 180)}: ${settings.width ?? "?"} × ${settings.height ?? "?"}; ${frames} moving-frame observations; ${captures} temporary captures.`,
+            `${sourceLabel.slice(0, 180)}: ${settings.width ?? "?"} × ${settings.height ?? "?"}; ${frames} advancing timestamp observations; ${captures} temporary captures.`,
             "Recorded before switching or retrying; it does not establish the current source’s condition.",
           ),
         ].slice(-20),
       );
     dispose();
     setCapture("");
+    setFrozen("");
+    setComplete(false);
+    setRemaining(4);
+    setBrightness(null);
+    setChange(0);
+    setPixelSamples(0);
     setFrames(0);
     setSettings({});
     setCaptures(0);
@@ -194,6 +264,7 @@ export function CameraTest({ onChange }: ModuleProps) {
       }
       stream.current = input;
       const track = input.getVideoTracks()[0];
+      if (!track) throw new DOMException("No camera track", "NotFoundError");
       setSettings(track.getSettings());
       setSourceLabel(track.label || "Camera label not exposed");
       track.addEventListener("ended", () => {
@@ -221,6 +292,14 @@ export function CameraTest({ onChange }: ModuleProps) {
       if (token !== epoch.current) return;
       setSources(devices.filter((d) => d.kind === "videoinput"));
       let lastTime = -1;
+      const started = performance.now();
+      const canvas = document.createElement("canvas");
+      canvas.width = 32;
+      canvas.height = 24;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      let previous: Uint8ClampedArray | undefined;
+      let brightnessTotal = 0;
+      let samples = 0;
       timer.current = setInterval(() => {
         const v = video.current;
         if (
@@ -231,7 +310,48 @@ export function CameraTest({ onChange }: ModuleProps) {
         ) {
           lastTime = v.currentTime;
           setFrames((n) => n + 1);
-          setSettings(track.getSettings());
+          setSettings({
+            ...track.getSettings(),
+            width: v.videoWidth,
+            height: v.videoHeight,
+          });
+          if (ctx) {
+            try {
+              ctx.drawImage(v, 0, 0, 32, 24);
+              const data = ctx.getImageData(0, 0, 32, 24).data;
+              const sample = analyzeFrame(data, previous);
+              previous = data;
+              brightnessTotal += sample.brightness;
+              samples++;
+              setPixelSamples(samples);
+              setBrightness(brightnessTotal / samples);
+              setChange((n) => Math.max(n, sample.change));
+            } catch {
+              /* Pixel access may be restricted; arriving video remains observable. */
+            }
+          }
+        }
+        const elapsed = (performance.now() - started) / 1000;
+        setRemaining(Math.max(0, Math.ceil(4 - elapsed)));
+        if (elapsed >= 4) {
+          if (v && v.readyState >= 2 && v.videoWidth) {
+            try {
+              const preview = document.createElement("canvas");
+              preview.width = Math.min(960, v.videoWidth);
+              preview.height = Math.round(
+                (preview.width * v.videoHeight) / v.videoWidth,
+              );
+              preview
+                .getContext("2d")
+                ?.drawImage(v, 0, 0, preview.width, preview.height);
+              setFrozen(preview.toDataURL("image/jpeg", 0.75));
+            } catch {
+              /* A still preview is optional. */
+            }
+          }
+          setComplete(true);
+          dispose();
+          setRunning(false);
         }
       }, 250);
     } catch (err) {
@@ -258,8 +378,9 @@ export function CameraTest({ onChange }: ModuleProps) {
   return (
     <div className="td-module">
       <p>
-        Your camera opens only when you choose Start. Preview and captures stay
-        in memory and are discarded when you leave.
+        Choose Start camera, allow access, then wave a hand for four seconds. We
+        check that video arrives and sample light and changes automatically. The
+        camera turns off when the sample finishes. Images stay on this page.
       </p>
       <div className="td-toolbar">
         <button
@@ -296,36 +417,63 @@ export function CameraTest({ onChange }: ModuleProps) {
               dispose();
               setRunning(false);
               setCapture("");
+              setComplete(false);
             }}
           >
             Stop camera
           </button>
         )}
-        <button onClick={() => void start("user")} disabled={busy}>
-          Front camera
-        </button>
-        <button onClick={() => void start("environment")} disabled={busy}>
-          Rear camera
-        </button>
+        {running && (
+          <span className="td-sample-countdown">
+            {remaining}s remaining · wave your hand
+          </span>
+        )}
       </div>
-      {sources.length > 0 && (
-        <label className="td-source">
-          Camera source{" "}
-          <select
-            value={selected}
-            onChange={(e) => {
-              setSelected(e.target.value);
-              void start(e.target.value);
-            }}
-          >
-            <option value="">Default camera</option>
-            {sources.map((s, i) => (
-              <option key={s.deviceId || i} value={s.deviceId}>
-                {s.label || `Camera ${i + 1}`}
-              </option>
-            ))}
-          </select>
-        </label>
+      <details>
+        <summary>Use a different camera</summary>
+        <div className="td-toolbar">
+          <button onClick={() => void start("user")} disabled={busy}>
+            Front camera
+          </button>
+          <button onClick={() => void start("environment")} disabled={busy}>
+            Rear camera
+          </button>
+        </div>
+        {sources.length > 0 && (
+          <label className="td-source">
+            Camera source{" "}
+            <select
+              value={selected}
+              onChange={(e) => {
+                setSelected(e.target.value);
+                void start(e.target.value);
+              }}
+            >
+              <option value="">Default camera</option>
+              {sources.map((s, i) => (
+                <option key={s.deviceId || i} value={s.deviceId}>
+                  {s.label || `Camera ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </details>
+      {complete && (
+        <div className="td-auto-status is-complete" role="status">
+          <span className="td-auto-step">✓</span>
+          <div>
+            <strong>
+              {frames > 0
+                ? "Video frames received"
+                : "Sample finished · no video observed"}
+            </strong>
+            <p>
+              {cameraSummary} The camera is now off. You can continue, or add
+              your own image-quality assessment below.
+            </p>
+          </div>
+        </div>
       )}
       {error && (
         <div className="td-notice" role="status">
@@ -334,8 +482,15 @@ export function CameraTest({ onChange }: ModuleProps) {
       )}
       <div className="td-camera-view">
         <video ref={video} muted playsInline aria-label="Live camera preview" />
+        {frozen && !running && (
+          <img
+            className="td-camera-frozen"
+            src={frozen}
+            alt="Last camera sample, held in memory for optional visual inspection"
+          />
+        )}
         <span className="td-focus-target" aria-hidden="true" />
-        {!running && (
+        {!running && !frozen && (
           <div className="td-media-placeholder">
             {busy ? "Waiting for camera access" : "Camera preview appears here"}
           </div>
@@ -344,6 +499,29 @@ export function CameraTest({ onChange }: ModuleProps) {
           {running ? sourceLabel : "Camera off"}
         </span>
       </div>
+      {complete && (
+        <div className="td-auto-readings">
+          <div>
+            <strong>{frames} samples</strong>Video timestamps advanced
+          </div>
+          <div>
+            <strong>
+              {brightness === null
+                ? "Unavailable"
+                : brightness < 0.035
+                  ? "Very dark"
+                  : "Light received"}
+            </strong>
+            Local brightness observation
+          </div>
+          <div>
+            <strong>
+              {change > 0.01 ? "Image changed" : "Little / no change"}
+            </strong>
+            Movement, lighting or noise can change pixels
+          </div>
+        </div>
+      )}
       <div className="td-toolbar">
         <span className="td-stat">
           {frames > 0
@@ -368,6 +546,9 @@ export function CameraTest({ onChange }: ModuleProps) {
         lighting or a covered lens. Front/rear requests may open the same source
         when the browser exposes only one.
       </p>
+      {frozen && (
+        <button onClick={() => setFrozen("")}>Discard sample preview</button>
+      )}
     </div>
   );
 }
@@ -402,6 +583,23 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
   const [sources, setSources] = useState<MediaDeviceInfo[]>([]);
   const [selected, setSelected] = useState("");
   const [history, setHistory] = useState<Fact[]>([]);
+  const [complete, setComplete] = useState(false);
+  const [remaining, setRemaining] = useState(5);
+  const [sampleSeconds, setSampleSeconds] = useState(0);
+  const [soundSamples, setSoundSamples] = useState(0);
+  const [totalSamples, setTotalSamples] = useState(0);
+  const [speechState, setSpeechState] = useState("not_started");
+  const recognition = useRef<LocalRecognition | null>(null);
+  const countdown = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sampleStarted = useRef(0);
+  const microphoneSummary =
+    totalSamples === 0
+      ? "Sample finished. The sound meter was unavailable; listen to the recording to check the input."
+      : soundSamples < 3
+        ? "The sample was mostly quiet. Check mute, input selection and your distance from the microphone, then retry."
+        : clipSamples > 2
+          ? "Sound was received, with some samples close to digital clipping. Speak a little farther away and listen back."
+          : "Sound received automatically during the five-second sample.";
   function releaseUrl() {
     if (url.current) URL.revokeObjectURL(url.current);
     url.current = "";
@@ -409,6 +607,21 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
   function dispose(keepRecording = true) {
     epoch.current++;
     cancelAnimationFrame(frame.current);
+    if (countdown.current) {
+      clearInterval(countdown.current);
+      countdown.current = null;
+    }
+    if (recognition.current) {
+      recognition.current.onresult = null;
+      recognition.current.onerror = null;
+      recognition.current.onend = null;
+      try {
+        recognition.current.abort();
+      } catch {
+        /* Already ended. */
+      }
+      recognition.current = null;
+    }
     if (!keepRecording) recordingGeneration.current++;
     if (stopTimer.current) {
       clearTimeout(stopTimer.current);
@@ -426,8 +639,9 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
       recorder.current.stop();
     }
     recorder.current = null;
-    stream.current?.getTracks().forEach((t) => t.stop());
+    const previousStream = stream.current;
     stream.current = null;
+    previousStream?.getTracks().forEach((t) => t.stop());
     source.current?.disconnect();
     source.current = null;
     analyser.current?.disconnect();
@@ -438,7 +652,7 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
   useEffect(() => {
     mounted.current = true;
     const hide = () => {
-      if (document.hidden) {
+      if (document.hidden && (stream.current || promptTimer.current)) {
         dispose(false);
         releaseUrl();
         setPlayback("");
@@ -465,8 +679,50 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
     {
       ...failure,
       ready: played,
+      automatic: {
+        complete,
+        summary: microphoneSummary,
+        attention: totalSamples === 0 || soundSamples < 3 || clipSamples > 2,
+      },
       facts: [
         ...history,
+        fact(
+          "microphone.sample_complete",
+          "Five-second automatic input sample completed",
+          complete,
+        ),
+        fact(
+          "microphone.sample_seconds",
+          "Automatic input observation duration",
+          Number(sampleSeconds.toFixed(2)),
+          undefined,
+          "measured",
+          "seconds",
+        ),
+        fact(
+          "microphone.sound_samples",
+          "Level samples above the sound threshold",
+          soundSamples,
+          "Sound can be speech, ambient noise or another source; this alone does not verify words.",
+        ),
+        fact(
+          "microphone.level_samples",
+          "Audio level samples analyzed",
+          totalSamples,
+        ),
+        fact(
+          "microphone.phrase_prompt",
+          "Prompt shown for the sample",
+          MICROPHONE_PHRASE,
+          "Prompt displayed by TESTDRIVE; does not prove these words were spoken.",
+          "measured",
+        ),
+        fact(
+          "microphone.phrase_check",
+          "On-device phrase check",
+          speechState,
+          "Only an already-installed local English recognizer is used, with the default input. Other engines are never started. A phrase match does not certify clarity.",
+        ),
         fact(
           "microphone.input",
           "Current-source input above the UI signal threshold was observed",
@@ -523,9 +779,11 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
       ],
       explanation: failure.status
         ? notice || "The microphone check stopped before a final assessment."
-        : duration > 0 || inputObserved
-          ? "Input was observed from a local audio stream. Playback quality needs your listening confirmation; silence alone does not establish a hardware issue."
-          : "No completed microphone sample has been assessed. Silence, mute settings and routing need to be checked before drawing conclusions.",
+        : complete
+          ? `${microphoneSummary} ${speechState === "matched" ? "The requested words were matched on this device." : "The requested words were not verified; playback remains available when recording is supported."} Audio quality needs your listening confirmation.`
+          : duration > 0 || inputObserved
+            ? "Input was observed from a local audio stream. Playback quality needs your listening confirmation; silence alone does not establish a hardware issue."
+            : "No completed microphone sample has been assessed. Silence, mute settings and routing need to be checked before drawing conclusions.",
     },
     [
       failure,
@@ -538,6 +796,11 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
       sourceLabel,
       history,
       notice,
+      complete,
+      sampleSeconds,
+      soundSamples,
+      totalSamples,
+      speechState,
     ],
   );
   async function start() {
@@ -567,6 +830,13 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
     setClipSamples(0);
     setFormat("");
     setSourceLabel("");
+    setComplete(false);
+    setRemaining(5);
+    setSampleSeconds(0);
+    setSoundSamples(0);
+    setTotalSamples(0);
+    setSpeechState("not_started");
+    sampleStarted.current = 0;
     if (!available()) {
       setBusy(false);
       setNotice(
@@ -598,10 +868,13 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         return;
       }
       stream.current = input;
-      setSourceLabel(input.getAudioTracks()[0]?.label || "Default microphone");
+      const microphoneTrack = input.getAudioTracks()[0];
+      if (!microphoneTrack)
+        throw new DOMException("No microphone track", "NotFoundError");
+      setSourceLabel(microphoneTrack.label || "Default microphone");
       setRunning(true);
       setBusy(false);
-      input.getAudioTracks()[0]?.addEventListener("ended", () => {
+      microphoneTrack.addEventListener("ended", () => {
         if (mounted.current && stream.current === input) {
           dispose();
           setRunning(false);
@@ -632,17 +905,17 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
           if (time - previous >= 100) {
             previous = time;
             node.getByteTimeDomainData(data);
-            let sum = 0,
-              clipped = false;
-            for (const n of data) {
-              sum += ((n - 128) / 128) ** 2;
-              if (n <= 1 || n >= 254) clipped = true;
-            }
-            const rms = Math.sqrt(sum / data.length);
+            const { rms, clipped, signal } = analyzeAudioSamples(data);
             setLevel(rms);
-            setPeak((v) => Math.max(v, rms));
-            if (rms > 0.015) setInputObserved(true);
-            if (clipped) setClipSamples((v) => v + 1);
+            if (sampleStarted.current) {
+              setPeak((v) => Math.max(v, rms));
+              setTotalSamples((v) => v + 1);
+              if (signal) {
+                setInputObserved(true);
+                setSoundSamples((v) => v + 1);
+              }
+              if (clipped) setClipSamples((v) => v + 1);
+            }
           }
           frame.current = requestAnimationFrame(tick);
         };
@@ -659,15 +932,85 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         clearTimeout(promptTimer.current);
         promptTimer.current = null;
       }
+      sampleStarted.current = performance.now();
+      countdown.current = setInterval(() => {
+        const elapsed = Math.min(
+          5,
+          (performance.now() - sampleStarted.current) / 1000,
+        );
+        setSampleSeconds(elapsed);
+        setRemaining(Math.max(0, Math.ceil(5 - elapsed)));
+      }, 100);
+      const finish = () => {
+        setSampleSeconds(
+          Math.min(5, (performance.now() - sampleStarted.current) / 1000),
+        );
+        setRemaining(0);
+        setComplete(true);
+        setSpeechState((s) =>
+          s === "listening" || s === "checking" ? "not_matched" : s,
+        );
+        dispose();
+        setRunning(false);
+        setRecording(false);
+        setLevel(0);
+      };
+      stopTimer.current = setTimeout(finish, 5000);
+      // Optional phrase checking stays strictly on device; older/default
+      // SpeechRecognition implementations are never started.
+      if (!selected) {
+        setSpeechState("checking");
+        const speechWindow = window as unknown as {
+          SpeechRecognition?: LocalRecognitionConstructor;
+          webkitSpeechRecognition?: LocalRecognitionConstructor;
+        };
+        void createLocalRecognition(
+          speechWindow.SpeechRecognition ??
+            speechWindow.webkitSpeechRecognition,
+        ).then((local) => {
+          if (!mounted.current || token !== epoch.current) {
+            try {
+              local?.abort();
+            } catch {
+              /* Never started. */
+            }
+            return;
+          }
+          if (!local) {
+            setSpeechState("unavailable");
+            return;
+          }
+          recognition.current = local;
+          local.lang = "en-US";
+          local.continuous = false;
+          local.interimResults = true;
+          local.onresult = (event) => {
+            if (!mounted.current || token !== epoch.current) return;
+            const words = Array.from(event.results)
+              .map((result) => result[0]?.transcript ?? "")
+              .join(" ");
+            if (matchesMicrophonePhrase(words)) setSpeechState("matched");
+          };
+          local.onerror = () => {
+            if (mounted.current && token === epoch.current)
+              setSpeechState((s) => (s === "matched" ? s : "unavailable"));
+          };
+          local.onend = () => {
+            if (mounted.current && token === epoch.current)
+              setSpeechState((s) => (s === "listening" ? "not_matched" : s));
+          };
+          try {
+            local.start();
+            setSpeechState("listening");
+          } catch {
+            setSpeechState("unavailable");
+          }
+        });
+      } else setSpeechState("selected_input_not_supported");
       if (typeof MediaRecorder === "undefined") {
         setNotice(
           "Recording playback is unavailable here. The live meter can still observe input. The microphone will stop after five seconds.",
         );
-        stopTimer.current = setTimeout(() => {
-          dispose();
-          setRunning(false);
-          setLevel(0);
-        }, 5000);
         return;
       }
       const codec = [
@@ -685,11 +1028,6 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         setNotice(
           "Recording is unavailable with this browser’s codecs. The live meter remains usable for five seconds.",
         );
-        stopTimer.current = setTimeout(() => {
-          dispose();
-          setRunning(false);
-          setLevel(0);
-        }, 5000);
         return;
       }
       recorder.current = rec;
@@ -716,12 +1054,6 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
       };
       rec.start();
       setRecording(true);
-      stopTimer.current = setTimeout(() => {
-        dispose();
-        setRunning(false);
-        setRecording(false);
-        setLevel(0);
-      }, 5000);
     } catch (err) {
       if (token !== epoch.current || !mounted.current) return;
       dispose(false);
@@ -736,8 +1068,9 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
   return (
     <div className="td-module">
       <p>
-        Choose Start and speak for up to five seconds. Audio stays in memory.
-        Listen to your sample, then tell us whether it sounds clear.
+        Choose Start, allow access, and read the sentence aloud. We check for
+        sound automatically for five seconds, then turn the microphone off. Your
+        recording stays in memory and is discarded when you leave.
       </p>
       <div className="td-toolbar">
         <button
@@ -749,7 +1082,9 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
             ? "Opening microphone…"
             : playback
               ? "Record another sample"
-              : "Start microphone sample"}
+              : complete
+                ? "Try another sample"
+                : "Start microphone sample"}
         </button>
         {busy && (
           <button
@@ -775,28 +1110,65 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
               setRunning(false);
               setRecording(false);
               setLevel(0);
+              setSampleSeconds(
+                sampleStarted.current
+                  ? Math.min(
+                      5,
+                      (performance.now() - sampleStarted.current) / 1000,
+                    )
+                  : 0,
+              );
+              setComplete(false);
+              setSpeechState((s) =>
+                s === "listening" || s === "checking" ? "not_matched" : s,
+              );
+              setNotice(
+                "Sample stopped early. Your partial observations remain available; start again for the full automatic check.",
+              );
             }}
           >
             Stop sample
           </button>
         )}
       </div>
+      {complete && (
+        <div
+          className={`td-auto-status ${soundSamples >= 3 ? "is-complete" : ""}`}
+          role="status"
+        >
+          <span className="td-auto-step">{soundSamples >= 3 ? "✓" : "!"}</span>
+          <div>
+            <strong>
+              {soundSamples >= 3
+                ? "Sound received automatically"
+                : "Sample finished · check your input"}
+            </strong>
+            <p>
+              {microphoneSummary} The microphone is now off. You can save the
+              observation or try again.
+            </p>
+          </div>
+        </div>
+      )}
       {sources.length > 0 && (
-        <label className="td-source">
-          Microphone source{" "}
-          <select
-            value={selected}
-            disabled={running}
-            onChange={(e) => setSelected(e.target.value)}
-          >
-            <option value="">Default microphone</option>
-            {sources.map((s, i) => (
-              <option key={s.deviceId || i} value={s.deviceId}>
-                {s.label || `Microphone ${i + 1}`}
-              </option>
-            ))}
-          </select>
-        </label>
+        <details>
+          <summary>Use a different microphone</summary>
+          <label className="td-source">
+            Microphone source{" "}
+            <select
+              value={selected}
+              disabled={running}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              <option value="">Default microphone</option>
+              {sources.map((s, i) => (
+                <option key={s.deviceId || i} value={s.deviceId}>
+                  {s.label || `Microphone ${i + 1}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        </details>
       )}
       {notice && (
         <div className="td-notice" role="status">
@@ -804,6 +1176,12 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         </div>
       )}
       <div className="td-audio-panel">
+        <span className="td-sample-caption">
+          {running ? "Say this out loud now" : "When the sample starts, say"}
+        </span>
+        <blockquote className="td-sample-phrase">
+          “{MICROPHONE_PHRASE}”
+        </blockquote>
         <div className={`td-record-indicator ${recording ? "recording" : ""}`}>
           {recording
             ? "Recording · speak now"
@@ -813,6 +1191,9 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
                 ? "Sample ready to play"
                 : "Ready when you are"}
         </div>
+        {running && (
+          <span className="td-sample-countdown">{remaining}s remaining</span>
+        )}
         <div
           className="td-meter"
           role="meter"
@@ -830,9 +1211,43 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
           · {Math.round(peak * 100)}% peak normalized RMS
         </span>
       </div>
+      {(running || complete) && (
+        <div className="td-auto-readings">
+          <div>
+            <strong>
+              {soundSamples >= 3
+                ? "Sound detected"
+                : totalSamples
+                  ? "Quiet so far"
+                  : "Checking…"}
+            </strong>
+            {soundSamples} of {totalSamples} level samples above threshold
+          </div>
+          <div>
+            <strong>
+              {clipSamples > 2
+                ? "Some peaks too loud"
+                : "No repeated clipping observed"}
+            </strong>
+            Try a normal speaking distance
+          </div>
+          <div>
+            <strong>
+              {speechState === "matched"
+                ? "Phrase matched on device"
+                : speechState === "listening"
+                  ? "Checking words on device"
+                  : "Words not verified"}
+            </strong>
+            {speechState === "matched"
+              ? "The local recognizer matched the requested sentence."
+              : "Sound detection works without word recognition."}
+          </div>
+        </div>
+      )}
       {playback && (
         <div className="td-playback">
-          <label>Listen to your local sample</label>
+          <label>Optional: listen back to check clarity</label>
           <audio
             controls
             src={playback}
@@ -842,9 +1257,13 @@ export function MicrophoneTest({ onChange }: ModuleProps) {
         </div>
       )}
       <p className="td-help">
-        If you hear silence, check mute, input selection and Bluetooth routing.
-        Noise suppression and automatic gain may change the recording. Playback
-        scheduling alone does not confirm clarity.
+        Sound can include background noise, so receiving it does not prove the
+        words were spoken clearly. Phrase matching runs only when an English
+        speech model is already available on this device, using the default
+        input. We never start cloud speech recognition or download a speech
+        model. If words are not verified, listen back to confirm them yourself.
+        Silence can mean mute, routing or distance; it is not a hardware
+        verdict.
       </p>
     </div>
   );

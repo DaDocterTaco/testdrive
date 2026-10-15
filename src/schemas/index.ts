@@ -16,6 +16,7 @@ const TEST_IDS: TestId[] = [
   "CAM-01",
   "MIC-01",
   "SPK-01",
+  "PWR-01",
   "DISP-01",
 ];
 const SOURCES = [

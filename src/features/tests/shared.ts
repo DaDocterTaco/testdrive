@@ -3,6 +3,7 @@ import type { ExecutionStatus, Fact } from "../../types";
 
 export interface Evidence {
   facts: Fact[];
+  automatic?: { complete: boolean; summary: string; attention?: boolean };
   ready?: boolean;
   status?: ExecutionStatus;
   reason?: string;
@@ -10,6 +11,8 @@ export interface Evidence {
 }
 export interface ModuleProps {
   onChange: (evidence: Evidence) => void;
+  profileId?: string;
+  onProfileChange?: (id: string) => void;
 }
 export const uid = () =>
   globalThis.crypto?.randomUUID?.() ??

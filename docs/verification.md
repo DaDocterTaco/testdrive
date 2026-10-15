@@ -2,6 +2,14 @@
 
 This file records actual evidence. Checklists and intended behavior are not test results.
 
+## 1.1.0-beta.1 usability release
+
+The updated source passed `npm run check`: TypeScript, ESLint,36 unit tests in five files, and the production build. All17 full-Chromium desktop/mobile-viewport scenarios passed locally in1.6minutes on October14,2026. The cases include one-click scan without media permission, keyboard default prevention and triple-Escape/mouse/inactivity exits, all eight pointer stages, bounded synthetic camera/microphone capture, silent-input feedback, late-stream cancellation, battery charging events, confirmed Zenbook model import, remembered-profile deletion, a paused display tour, speaker stop controls, and the prior complete report/import/recovery/mobile workflows.
+
+Testing uncovered a native crash in the stripped Playwright Chromium156 headless shell's experimental `SpeechRecognition.available` call, reproduced on an otherwise empty page. Full Chromium safely reports local language availability and completes the microphone sample. Browser projects and the production smoke use Playwright's `channel: "chromium"`; CI's normal `playwright install --with-deps chromium` installs that full browser. No remote speech engine or language-pack download was added.
+
+Software input, generated canvas video, oscillator audio, fake battery events and mobile viewport emulation remain explicitly synthetic. Physical iPhone/Safari and actual hardware quality remain unverified. The production and CI publication results for this release are appended after deployment. The beta3 entries below are historical and identify their earlier implementation.
+
 ## Infrastructure evidence
 
 | Action | Observed result |

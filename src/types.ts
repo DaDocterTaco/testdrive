@@ -25,6 +25,7 @@ export type TestId =
   | "CAM-01"
   | "MIC-01"
   | "SPK-01"
+  | "PWR-01"
   | "DISP-01";
 export interface Fact {
   id: string;
@@ -91,4 +92,4 @@ export interface TestDefinition {
   group: "performance" | "input" | "media" | "display";
   duration: string;
 }
-export const APP_VERSION = "1.0.0-beta.3";
+export const APP_VERSION = "1.1.0-beta.1";

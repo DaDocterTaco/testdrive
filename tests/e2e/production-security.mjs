@@ -5,7 +5,7 @@ import { chromium } from '@playwright/test';
 const origin = process.env.TD_E2E_BASE_URL;
 assert(origin?.startsWith('https://'), 'Set TD_E2E_BASE_URL to the confirmed deployed HTTPS origin.');
 const appVersion = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')).version;
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, channel: 'chromium' });
 try {
   const context = await browser.newContext();
   await context.addInitScript(() => {
@@ -34,8 +34,6 @@ try {
   assert.match(await page.locator('main').innerText(), /This report isn’t saved in this browser/);
   await page.goto(`${origin}/`);
   await page.getByRole('button', { name:'Start inspection', exact:true }).click();
-  await page.getByRole('button', { name:'Run quick scan', exact:true }).click();
-  await page.getByRole('button', { name:'Run quick scan', exact:true }).click();
   await page.getByText('Your quick scan is saved.', { exact:true }).waitFor();
   assert.equal(await page.locator('.scan-task .status').allTextContents().then(values => values.filter(value => value === 'Observed').length), 3, 'All three supported automatic checks must observe real browser work on this Chromium run.');
   violations.push(...await page.evaluate(() => window.__testdriveSecurityViolations));

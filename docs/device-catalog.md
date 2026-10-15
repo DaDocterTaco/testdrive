@@ -1,0 +1,31 @@
+# Laptop and keyboard reference catalog
+
+TESTDRIVE 1.1 includes four curated US English laptop references. The catalog is bundled locally; selecting a reference or matching an imported model does not contact a server. Manufacturer information describes a model family. It is never converted into measured CPU, installed RAM, storage, camera condition, or a hardware pass.
+
+| Profile | Model match | Physical layout distinctions |
+| --- | --- | --- |
+| ASUS Zenbook DUO UX8406CA (2025) | Exact `UX8406CA` token, including `ASUS Zenbook Duo UX8406CA_UX8406CA`; ASUS/ASUSTeK when manufacturer supplied | Detachable US keyboard. F1–F12 followed by Capture, Print Screen, Delete/Insert. Bottom row Ctrl, Fn, Windows, Alt, Space, Alt, Copilot, inverted-T arrows. No right Ctrl. |
+| MacBook Air 13-inch M2 (2022) | `Mac14,2`, `A2681`, or unambiguous full model name | Fn/Globe, Control, Option and left Command, Space, right Command and Option; inverted-T arrows; Touch ID at top right. |
+| Dell XPS 13 9315 (2022) | Exact XPS 13 9315/XPS 9315 laptop name; 2-in-1 rejected | F1–F12, Insert, Delete, power. Ctrl/Fn/Windows ordering; full-height left/right arrows, stacked up/down. |
+| ThinkPad T14 Gen 4 (2023) | Full T14 Gen 4 name; machine type prefixes 21HD/21HE/21K3/21K4 only with Lenovo manufacturer | Fn left of Ctrl; Home/End/Insert/Delete at top right; Print Screen in bottom row; Page Up/Down above left/right arrows. TrackPoint belongs to pointer test. |
+
+Generic US ANSI remains an explicit alternative for unknown, external, replacement or other keyboards. Nothing defaults to the developer's own laptop. A webpage cannot read a Windows laptop's exact model from its ordinary browser APIs, so imported manufacturer/model facts or a user choice drive matching. An imported model cannot prove the physical keyboard region. All references explain this, and the user can change them.
+
+## Manufacturer evidence
+
+All references were checked on 2026-10-14. Physical positions were visually inspected in manufacturer diagrams; the UI is an original schematic, not a copied product image. Relative widths are schematic rather than millimeter measurements. Regional labels, replacement parts and firmware remapping can differ.
+
+- ASUS: [UX8406CA English e-manual E26354, p. 27](https://dlcdnets.asus.com/pub/ASUS/nb/UX8406CA/0409_E26354_UX8406CA_V2_C.pdf), and [official manual index](https://www.asus.com/us/supportonly/ux8406ca/helpdesk_manual/). The manual explicitly notes regional variation. The special Capture and Copilot positions have no assumed universal browser event code.
+- Apple: [MacBook Air M2 technical specifications](https://support.apple.com/en-us/111867), [Magic Keyboard diagram and functions](https://support.apple.com/guide/macbook-air/magic-keyboard-apdab672d5e9/mac), and [model identification](https://support.apple.com/en-us/102869). The schematic has 78 positions including Touch ID; only observable core positions count toward completion.
+- Dell: [US keyboard specifications](https://www.dell.com/support/manuals/en-us/xps-13-9315-laptop/xps-13-9315-setup-and-specs/keyboard?guid=guid-f4d96b7c-8a4a-4f24-8b88-1f81d17905bb&lang=en-us), [top-view diagram](https://www.dell.com/support/manuals/en-us/xps-13-9315-laptop/xps-13-9315-setup-and-specs/top?guid=guid-5fe1b857-0eef-49c4-94a8-285f27e7e23c&lang=en-us). Dell specifies 79 US/Canada keys; the schematic separately shows the power button.
+- Lenovo: [T14 Gen 4 user guide, printed p. 1 / PDF p. 7](https://download.lenovo.com/pccbbs/mobiles_pdf/t14_gen4_p14s_gen4_t16_gen2_p16s_gen2_linux_ug.pdf), [Intel family specifications](https://psref.lenovo.com/syspool/Sys/PDF/ThinkPad/ThinkPad_T14_Gen_4_Intel/ThinkPad_T14_Gen_4_Intel_Spec.pdf). Intel/AMD configurations vary; no installed component configuration is inferred.
+
+## Keyboard capture behavior
+
+Capture starts only after the explicit **Start keyboard test** button. It requests Fullscreen and, where available, Keyboard Lock. Cancelable key events are prevented during capture; outside capture there are no global key handlers. Keyboard Lock can require browser permission and only captures keys allowed by the operating system. Windows/Command and secure OS combinations cannot be promised to stay in the page. [Chrome's Keyboard Lock documentation](https://developer.chrome.com/docs/capabilities/web-apis/keyboard-lock) explains the permission, fullscreen requirement, OS limits and long-Escape browser escape hatch.
+
+Three separate Escape presses within two seconds exit capture. Other non-repeat key presses reset the sequence; holding Escape does not manufacture three presses. Clicking Exit, 60 seconds without keyboard or mouse input in the test, losing window focus, leaving fullscreen, hiding the tab, moving focus outside capture, or unmounting also releases the session. Browsers without a working lock may exit fullscreen on the first Escape. Partial observations survive these exits.
+
+Each core key must send a press and release before automatic coverage completes. Fn, power/Touch ID, Windows/Command, screenshot/Copilot, Print Screen and function-row keys are optional because firmware or the OS may intercept them. Optional observed events are still saved. Missing events are untested, not failed. The drawing itself never records a key press. Unknown or absent `KeyboardEvent.code` values are safely encoded and reported separately from physical key positions. Events are bounded to 180 distinct identities and do not store typed sentences.
+
+Source modules: `src/devices/catalog.ts`, `src/devices/selection.ts`, `src/features/tests/KeyboardTest.tsx`, `src/features/tests/keyboardCapture.ts`. Unit tests cover exact matching and refusals, distinct physical positions, hardware-only exclusions, Escape sequence semantics and Unicode fallback encoding. Browser workflow tests cover active capture, exits, cancellation, inactivity and imported model matching. Software tests do not establish physical key quality or OS interception on every browser.

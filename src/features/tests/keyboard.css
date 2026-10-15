@@ -1,0 +1,451 @@
+.td-keyboard-module .td-toolbar label {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  font-size: 12px;
+}
+.td-keyboard-module select {
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+}
+.td-keyboard-capture {
+  border: 1px solid #dbe5dd;
+  border-radius: 20px;
+  background: #f8faf7;
+  padding: 20px;
+  outline: none;
+}
+.td-keyboard-capture.is-capturing {
+  position: fixed;
+  inset: 16px;
+  z-index: 10000;
+  background: #f8faf7;
+  overflow: auto;
+  box-shadow: 0 0 0 100vmax #12281b99;
+  padding: clamp(16px, 3vw, 48px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.td-keyboard-capture:fullscreen {
+  inset: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 100vh;
+}
+.td-capture-top {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.td-capture-top h3 {
+  font-size: clamp(19px, 2.4vw, 28px);
+  line-height: 1.25;
+  letter-spacing: -0.65px;
+  margin: 7px 0 0;
+  color: #173d2c;
+}
+.td-workbench .td-capture-exit {
+  background: #fff;
+  border: 1px solid #859a8b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.td-capture-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #eaf3e9;
+  border: 1px solid #c9dec8;
+  padding: 20px;
+  border-radius: 14px;
+  margin-bottom: 22px;
+}
+.td-capture-start > svg {
+  flex-shrink: 0;
+  color: #19724d;
+}
+.td-capture-start strong {
+  font-size: 16px;
+}
+.td-capture-start p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #506956;
+  margin: 6px 0 0;
+  max-width: 420px;
+}
+.td-capture-start button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.td-capture-instructions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  background: #e4f0e4;
+  border-radius: 12px;
+  color: #205638;
+  margin-bottom: 12px;
+}
+.td-capture-instructions > svg {
+  flex-shrink: 0;
+}
+.td-capture-instructions strong {
+  font-size: 14px;
+}
+.td-capture-instructions p {
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+.td-capture-instructions kbd {
+  background: white;
+  border: 1px solid #becfc0;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.td-idle-time {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.td-capture-limit {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #647267;
+  margin: 0 0 20px;
+}
+.td-keyboard-capture .td-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #d4dcd3;
+  border-radius: 15px;
+  background: #e8ece5;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 2px #ffffff;
+}
+.td-keyboard-capture .td-keyboard.is-focused {
+  border-color: #9ebc9f;
+  box-shadow: 0 0 0 3px #dbe9d9;
+}
+.td-keyboard-capture .td-key-row {
+  display: flex;
+  gap: 5px;
+  align-items: stretch;
+  width: 100%;
+}
+.td-keyboard-capture .td-key {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  min-height: 42px;
+  height: clamp(34px, 4vw, 58px);
+  border-radius: 6px;
+  border: 1px solid #c7d2c6;
+  border-bottom: 3px solid #bdc9bc;
+  background: #fff;
+  color: #344938;
+  font-size: clamp(8px, 1.2vw, 13px);
+  padding: 3px 1px;
+  box-sizing: border-box;
+  transition:
+    background 0.1s,
+    transform 0.1s;
+  overflow: hidden;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.td-keyboard-capture .td-key small {
+  font-size: 0.7em;
+  color: inherit;
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+.td-keyboard-capture .function-row .td-key {
+  height: 32px;
+  min-height: 28px;
+  font-size: clamp(7px, 1vw, 11px);
+}
+.td-keyboard-capture .td-key.optional {
+  background: #edf0eb;
+  border-style: dashed;
+  color: #66745f;
+}
+.td-keyboard-capture .td-key.half {
+  height: calc(clamp(34px, 4vw, 58px) / 2 - 2px);
+  min-height: 0;
+  align-self: flex-end;
+}
+.td-keyboard-capture .td-key-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.td-keyboard-capture .td-key-stack .td-key {
+  height: 0;
+  min-height: 0;
+}
+.td-keyboard-capture .td-key-stack .td-key small {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  font-size: 7px;
+}
+.td-keyboard-capture .td-key.seen {
+  background: #cce6cd;
+  border-color: #9dc39f;
+  color: #16482b;
+}
+.td-keyboard-capture .td-key.held {
+  background: #207e50;
+  border-color: #17643e;
+  color: white;
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+  box-shadow: 0 0 0 2px #b5dcb6;
+}
+.td-key-check {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+}
+.td-keyboard-progress {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 20px 0 14px;
+}
+.td-keyboard-progress > div:first-child {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 4px;
+}
+.td-keyboard-progress strong {
+  font-size: 23px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.td-keyboard-progress strong span {
+  font-size: 15px;
+  color: #6b7b6e;
+  font-weight: 500;
+}
+.td-keyboard-progress > div > span {
+  font-size: 11px;
+  color: #637265;
+}
+.td-keyboard-progress progress {
+  height: 8px;
+  width: 100%;
+  flex: 1;
+  min-width: 40px;
+  accent-color: #267e4b;
+  border: 0;
+  border-radius: 9px;
+}
+.td-keyboard-progress progress::-webkit-progress-bar {
+  background: #dfe7dc;
+  border-radius: 9px;
+}
+.td-keyboard-progress progress::-webkit-progress-value {
+  background: #267e4b;
+  border-radius: 9px;
+}
+.td-key-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: #61705f;
+}
+.td-key-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.td-key-legend i {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #bac8b8;
+  border-radius: 3px;
+  background: #fff;
+}
+.td-key-legend i.green {
+  background: #cce6cd;
+  border-color: #9dc39f;
+}
+.td-key-legend i.gray {
+  background: #e8ece5;
+  border-style: dashed;
+}
+.td-keyboard-capture .td-live {
+  background: #fff;
+  border-color: #e0e7de;
+  font-size: 12px;
+}
+.td-keyboard-success {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: #21653d;
+  background: #e2f0df;
+  padding: 13px;
+  border-radius: 9px;
+  margin-top: 12px;
+}
+.td-exit-reason {
+  font-size: 12px;
+  color: #4e6553;
+  margin: 12px 0 0;
+}
+.td-keyboard-details {
+  margin: 18px 0;
+  font-size: 13px;
+  color: #435d48;
+}
+.td-keyboard-details summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.td-keyboard-details p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+@media (max-width: 700px) {
+  .td-keyboard-capture {
+    padding: 14px;
+  }
+  .td-capture-start {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px;
+  }
+  .td-capture-start > div {
+    flex: 1;
+    min-width: 150px;
+  }
+  .td-capture-start button {
+    width: 100%;
+    margin: 0;
+  }
+  .td-capture-top {
+    align-items: flex-start;
+  }
+  .td-capture-top h3 {
+    font-size: 19px;
+  }
+  .td-workbench .td-capture-exit {
+    font-size: 11px;
+    padding: 9px;
+    white-space: normal;
+    max-width: 135px;
+  }
+  .td-capture-instructions {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .td-capture-instructions > div {
+    flex: 1;
+  }
+  .td-idle-time {
+    margin-left: 30px;
+  }
+  .td-keyboard-capture .td-keyboard {
+    padding: 7px;
+    gap: 4px;
+  }
+  .td-keyboard-capture .td-key-row {
+    gap: 3px;
+  }
+  .td-keyboard-capture .td-key {
+    font-size: 8px;
+    min-height: 31px;
+    height: 34px;
+    border-radius: 3px;
+  }
+  .td-keyboard-capture .td-key small {
+    font-size: 7px;
+  }
+  .td-keyboard-capture .td-key.half {
+    height: 15px;
+    min-height: 0;
+  }
+  .td-keyboard-capture .function-row .td-key {
+    font-size: 6px;
+    height: 24px;
+    min-height: 24px;
+  }
+  .td-key-check {
+    display: none;
+  }
+  .td-keyboard-progress {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .td-key-legend {
+    width: 100%;
+  }
+  .td-keyboard-capture.is-capturing {
+    inset: 6px;
+    padding: 14px;
+    justify-content: flex-start;
+  }
+  .td-keyboard-capture:fullscreen {
+    inset: 0;
+  }
+  .td-capture-limit {
+    font-size: 11px;
+  }
+}
+@media (max-width: 400px) {
+  .td-keyboard-module {
+    padding: 18px 10px;
+  }
+  .td-keyboard-capture {
+    padding: 10px;
+  }
+  .td-keyboard-capture .td-keyboard {
+    padding: 5px;
+  }
+  .td-keyboard-capture .td-key-row {
+    gap: 2px;
+  }
+  .td-keyboard-capture .td-key {
+    font-size: 6px;
+  }
+  .td-keyboard-capture .td-key small {
+    font-size: 6px;
+  }
+  .td-capture-top {
+    flex-direction: column;
+  }
+  .td-capture-top .td-capture-exit {
+    max-width: none;
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -13,16 +13,21 @@ export default defineConfig({
   projects: [
     {
       name: "desktop-chromium",
-      testMatch: "**/desktop.spec.ts",
+      testMatch: ["**/desktop.spec.ts", "**/automation.spec.ts"],
       use: {
         ...devices["Desktop Chrome"],
+        channel: "chromium",
         viewport: { width: 1440, height: 1000 },
       },
     },
     {
       name: "iphone-viewport-emulation",
       testMatch: "**/mobile.spec.ts",
-      use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
+      use: {
+        ...devices["iPhone 13"],
+        defaultBrowserType: "chromium",
+        channel: "chromium",
+      },
     },
   ],
   webServer: process.env.TD_E2E_BASE_URL

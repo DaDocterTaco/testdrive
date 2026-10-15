@@ -1,0 +1,7 @@
+SYNTHETIC SOFTWARE TEST — this file does not describe the user's computer.
+OS Name	Microsoft Windows 11 Home
+Version	10.0.26100 Build 26100
+System Manufacturer	ASUSTeK COMPUTER INC.
+System Model	ASUS Zenbook DUO UX8406CA_UX8406CA
+Processor	Intel(R) Core(TM) Ultra 9 285H
+Installed Physical Memory (RAM)	32.0 GB

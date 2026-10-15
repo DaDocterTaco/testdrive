@@ -298,6 +298,7 @@ describe("bounded engine and storage behavior", () => {
       "CAM-01",
       "MIC-01",
       "SPK-01",
+      "PWR-01",
       "DISP-01",
     ]);
   });

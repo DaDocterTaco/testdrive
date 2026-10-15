@@ -12,9 +12,44 @@ export async function startInspection(
   await page
     .getByRole("button", { name: "Start inspection", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/inspect\/[^/]+\/setup$/);
+  await expect(page).toHaveURL(/\/inspect\/[^/]+\/scan/);
+  await expect(
+    page.getByText("Your quick scan is saved.", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: /Device & setup/ }).click();
   await page.getByLabel("Give it a name").fill(nickname);
   return page.url().match(/\/inspect\/([^/]+)\//)![1];
+}
+
+export async function saveSetup(page: Page): Promise<void> {
+  await page
+    .getByRole("button", { name: "Save & continue", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/inspect\/[^/]+\/tests$/);
+}
+
+export async function assess(
+  page: Page,
+  answer: "Looks / sounds right" | "Not sure" | "I noticed a problem",
+): Promise<void> {
+  const assessment = page.locator("details.td-assessment");
+  if (
+    (await assessment.count()) &&
+    !(await assessment.evaluate(
+      (element) => (element as HTMLDetailsElement).open,
+    ))
+  ) {
+    await assessment.locator(":scope > summary").click();
+  }
+  await page.getByRole("button", { name: answer }).click();
+}
+
+export async function saveGuided(page: Page): Promise<void> {
+  const before = new URL(page.url()).pathname;
+  await page
+    .getByRole("button", { name: /^Save & (?:next check|review)/ })
+    .click();
+  await page.waitForURL((url) => url.pathname !== before);
 }
 
 export async function finishReport(
@@ -42,13 +77,11 @@ export async function importReport(
   page: Page,
   contents: string,
 ): Promise<void> {
-  await page
-    .locator("input[type=file]")
-    .setInputFiles({
-      name: "testdrive-synthetic.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(contents),
-    });
+  await page.locator("input[type=file]").setInputFiles({
+    name: "testdrive-synthetic.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(contents),
+  });
 }
 
 export async function evidence(
@@ -59,15 +92,18 @@ export async function evidence(
   const production = page.url().startsWith("https://");
   const target = path.resolve("docs/evidence", production ? "production" : ".");
   await mkdir(target, { recursive: true });
-  await page.evaluate((label) => {
-    const banner = document.createElement("div");
-    banner.id = "software-test-evidence-label";
-    banner.textContent = label;
-    banner.style.cssText =
-      "position:relative;padding:7px 12px;background:#132b29;color:white;font:11px/1.4 system-ui;text-align:center;pointer-events:none";
-    document.body.prepend(banner);
-    window.scrollTo(0, 0);
-  }, production ? `Production HTTPS · ${text}` : text);
+  await page.evaluate(
+    (label) => {
+      const banner = document.createElement("div");
+      banner.id = "software-test-evidence-label";
+      banner.textContent = label;
+      banner.style.cssText =
+        "position:relative;padding:7px 12px;background:#132b29;color:white;font:11px/1.4 system-ui;text-align:center;pointer-events:none";
+      document.body.prepend(banner);
+      window.scrollTo(0, 0);
+    },
+    production ? `Production HTTPS · ${text}` : text,
+  );
   await page.screenshot({
     path: path.join(target, name),
     fullPage: true,

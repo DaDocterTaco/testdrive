@@ -1,30 +1,25 @@
-# TESTDRIVE 1.0.0-beta.3
+# TESTDRIVE 1.1.0-beta.1
 
-**Know the device before you buy it.**
+This update makes an inspection easier to start and completes more checks from observed input. One click starts the automatic scan; saving a result takes the user to the next pending check.
 
-[Open the live app](https://testdrive-offgrid-2026.web.app) · [Public source](https://github.com/DaDocterTaco/testdrive) · [Immutable implementation](https://github.com/DaDocterTaco/testdrive/tree/v1.0.0-beta.3-offgrid)
+- Four manufacturer-sourced US keyboard profiles: ASUS Zenbook DUO UX8406CA, Apple MacBook Air13-inch M2 (2022), Dell XPS13 9315, and Lenovo ThinkPad T14 Gen4. A supported confirmed Windows import selects a matching layout; manual choices are remembered locally and cleared with local data.
+- Explicit keyboard capture with visible active state, per-key press/release progress, triple-Escape, mouse Exit,60-second inactivity and focus-loss exits.
+- An eight-step pointer challenge automatically checks target movement, clicks, both scroll directions and dragging.
+- Four-second camera and five-second microphone samples automatically check received media and stop capture. Optional installed on-device speech recognition can match the displayed phrase. No cloud transcription fallback or language-pack download is used.
+- Battery/charger readings where available, a pausable display color tour, clearer instructions, optional human feedback and next-check navigation.
 
-This beta provides an inspection-to-report workflow for computers, phones, and tablets. It combines qualified browser information, bounded processing and graphics samples, guided input/media/display checks, local English Windows specification import, and cautious seller-claim comparison. Reports retain sources, uncertainty, notes, and attempts, and can be saved locally, moved as validated JSON, or printed.
+The laptop catalog is a reference database, not proof of current hardware specifications. Exact model selection needs a supplied/confirmed model or a manual choice. Operating-system reserved keys may still open system actions because a website cannot intercept keys the OS withholds. Sound detection does not claim word recognition; picture/sound quality and display defects still need human judgement.
 
-[Watch or download the silent 60-second walkthrough](https://github.com/DaDocterTaco/testdrive/releases/download/v1.0.0-beta.3-offgrid/demo-browser-walkthrough.webm). It shows the actual public app with labeled synthetic specifications, seller claims, and software inputs. It does not claim physical-device verification.
-
-Camera/microphone access starts only from the relevant action. Temporary media is not uploaded to an application backend. Inspections remain in the browser unless exported. Firebase serves static assets, including self-hosted fonts; no account or inspection database is required.
-
-Beta 2 added schema-safe keyboard fallbacks when browsers omit physical key codes. Beta 3 improves printed reports by keeping headings and evidence rows readable across pages. Earlier source tags remain unchanged.
+Camera/microphone access starts only after the relevant action. Temporary media and normalized reports stay in the browser unless the user exports a report. Firebase serves the static app; no account, inspection backend or API secret is required.
 
 ## Verification
 
-- Implementation commit: `d7eea4973711164ee758c70eacab9e383b921fdc`; immutable tag: `v1.0.0-beta.3-offgrid`.
-- [Final GitHub CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38666848119): reproducible install, typecheck, lint, 21 unit tests, production build, and all 7 desktop/mobile-viewport browser scenarios passed.
-- Public HTTPS/deep-route behavior, real missing-file 404, security/permission headers, cache policy, and public asset hashes were verified against the checked build.
-- All 7 final public workflows passed in 39.2 seconds. A fresh production browser ran all 3 automatic observations under the content policy with no CSP violations, failed requests, third-party requests, or browser errors.
-- The actual synthetic browser PDF spans 7 A4 pages; all page renders passed visual review without clipping, overlap, orphan results heading, or split evidence rows. Physical printing was not tested.
-- Screenshots and any walkthrough explicitly label synthetic data, software input, and viewport emulation. Detailed production evidence is in `docs/evidence/production` and `docs/verification.md`.
+The implementation was checked with TypeScript, ESLint,36 unit tests, a production build and the desktop/mobile-viewport browser regression suite. Current local, production and CI results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
 
-## Limits
+Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 
-Physical iPhone/Safari behavior and real camera/microphone/input quality have not been independently verified. Browser hints are not exact hardware specifications. Imported reports are user-supplied and are not authenticated. Timing depends on the environment. Battery wear, disk health, ownership, hidden defects, pairing/QR relay, accounts, and cloud report sync are outside this beta.
+[Live app](https://testdrive-offgrid-2026.web.app) · [Public source](https://github.com/DaDocterTaco/testdrive) · [Update details](usability-update.md) · [Catalog sources](device-catalog.md)
 
-TESTDRIVE is an inspection record, not a device certification or purchase guarantee. A public app/release does not establish that an event submission was completed.
+The earlier beta3 walkthrough remains historical evidence of that release. It does not demonstrate the1.1 changes. Earlier source tags are unchanged.
 
-OpenAI Codex and specialist coding agents assisted development and verification. They are AI tools, not human team participants. Third-party packages and self-hosted fonts retain their licenses; see `THIRD_PARTY_NOTICES.md`.
+OpenAI Codex and specialist coding agents assisted development and verification. They are AI tools, not human team participants. Third-party packages and fonts retain their licenses in THIRD_PARTY_NOTICES.md. A public release does not establish event submission.
