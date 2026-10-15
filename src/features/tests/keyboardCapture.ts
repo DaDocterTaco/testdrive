@@ -1,5 +1,22 @@
 export const KEYBOARD_IDLE_MS = 60_000;
 export const ESCAPE_WINDOW_MS = 2_000;
+export function isCopilotModifier(code: string) {
+  return ["MetaLeft", "MetaRight", "ShiftLeft", "ShiftRight"].includes(code);
+}
+export function isCopilotShortcut(
+  event: Pick<
+    KeyboardEvent,
+    "code" | "key" | "metaKey" | "shiftKey" | "ctrlKey" | "altKey"
+  >,
+) {
+  return (
+    (event.code === "F23" || event.key === "F23") &&
+    event.metaKey &&
+    event.shiftKey &&
+    !event.ctrlKey &&
+    !event.altKey
+  );
+}
 export interface EscapeSequence {
   count: number;
   lastAt: number;

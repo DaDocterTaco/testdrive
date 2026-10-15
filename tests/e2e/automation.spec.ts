@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   assertNoHorizontalOverflow,
+  assess,
   downloadReport,
   evidence,
   saveGuided,
@@ -144,6 +145,152 @@ test("keyboard capture has explicit entry, prevents page defaults and exits by t
     "keyboard-capture-exit-software-test.png",
     "Synthetic key events and virtual clock · browser capture exits verified · OS shortcuts not physically tested",
   );
+});
+
+test("ASUS Copilot chord credits the AI key and Escape dots show, reset and confirm exit", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    // Exercise the documented standard-capture branch without a platform fullscreen prompt.
+    Object.defineProperty(Element.prototype, "requestFullscreen", {
+      configurable: true,
+      value: async () => {
+        throw new DOMException("Software fallback test", "NotAllowedError");
+      },
+    });
+  });
+  const id = await fastStart(page);
+  await page.goto(`/inspect/${id}/test/KEY-01`);
+  await page
+    .getByLabel("Keyboard model · US English")
+    .selectOption("asus-zenbook-duo-ux8406ca-us");
+  await page.clock.install({ time: new Date("2026-10-15T04:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-10-15T04:00:01Z"));
+  await page
+    .getByRole("button", { name: "Start keyboard test", exact: true })
+    .click();
+  const copilot = page.locator('[data-code="Copilot"]');
+  const shift = page.locator('[data-code="ShiftLeft"]');
+  const windows = page.locator('[data-code="MetaLeft"]');
+  const dots = page.locator(".td-escape-dot");
+  await expect(dots).toHaveCount(3);
+  await expect(
+    page.getByLabel("Escape progress: 0 of 3", { exact: true }),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    for (const type of ["keydown", "keyup"])
+      window.dispatchEvent(
+        new KeyboardEvent(type, {
+          key: "F23",
+          code: "F23",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+  });
+  await expect(copilot).toHaveAttribute("data-key-state", "unseen");
+  await page.evaluate(() => {
+    for (const event of [
+      { type: "keydown", code: "MetaLeft", key: "Meta", metaKey: true },
+      {
+        type: "keydown",
+        code: "ShiftLeft",
+        key: "Shift",
+        metaKey: true,
+        shiftKey: true,
+      },
+      {
+        type: "keydown",
+        code: "F23",
+        key: "F23",
+        metaKey: true,
+        shiftKey: true,
+      },
+      { type: "keyup", code: "F23", key: "F23", metaKey: true, shiftKey: true },
+      { type: "keyup", code: "ShiftLeft", key: "Shift", metaKey: true },
+      { type: "keyup", code: "MetaLeft", key: "Meta" },
+    ])
+      window.dispatchEvent(
+        new KeyboardEvent(event.type, {
+          ...event,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+  });
+  await expect(copilot).toHaveAttribute("data-key-state", "released");
+  await expect(shift).toHaveAttribute("data-key-state", "compound");
+  await expect(windows).toHaveAttribute("data-key-state", "compound");
+  await page.keyboard.press("Shift");
+  await expect(shift).toHaveAttribute("data-key-state", "released");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByLabel("Escape progress: 1 of 3", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.td-escape-dot[data-filled="true"]')).toHaveCount(
+    1,
+  );
+  await page.clock.runFor(2_250);
+  await expect(
+    page.getByLabel("Escape progress: 0 of 3", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.td-escape-dot[data-filled="true"]')).toHaveCount(
+    0,
+  );
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("a");
+  await expect(
+    page.getByLabel("Escape progress: 0 of 3", { exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByLabel("Escape progress: 2 of 3", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.td-escape-dot[data-filled="true"]')).toHaveCount(
+    2,
+  );
+  await evidence(
+    page,
+    "copilot-escape-two-dots-software-test.png",
+    "Synthetic Win+Shift+F23 input · Escape progress 2 of 3 · software behavior only",
+  );
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Start keyboard test", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Escape progress: 3 of 3", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('.td-escape-dot[data-filled="true"]')).toHaveCount(
+    3,
+  );
+  await expect(copilot).toHaveAttribute("data-key-state", "released");
+  await evidence(
+    page,
+    "copilot-chord-escape-dots-software-test.png",
+    "Synthetic Win+Shift+F23 browser events · AI shortcut and exit progress verified · no physical AI key validation",
+  );
+  await assess(page, "Not sure");
+  const report = await saveAndExport(page, id);
+  const keyboard = report.inspection.attempts.find(
+    (attempt) => attempt.testId === "KEY-01",
+  )!;
+  expect(
+    keyboard.facts.find(
+      (fact) => fact.key === "keyboard.copilot.shortcut_count",
+    )?.value,
+  ).toBe(1);
+  expect(
+    keyboard.facts.find((fact) => fact.key === "keyboard.copilot.released")
+      ?.value,
+  ).toBe(true);
+  expect(
+    keyboard.facts.find((fact) => fact.key === "keyboard.key.MetaLeft")?.value,
+  ).toContain("release received");
+  expect(
+    keyboard.facts.find((fact) => fact.key === "keyboard.core_complete")?.value,
+  ).toBe(3);
 });
 
 test("pointer challenge automatically verifies each required action and excludes touch", async ({
@@ -521,7 +668,11 @@ test("confirmed Zenbook system report selects its US keyboard without converting
     .getByRole("button", { name: "Delete local data", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toBeHidden();
-  await expect.poll(() => page.evaluate(() => localStorage.getItem("testdrive-keyboard-profile"))).toBeNull();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("testdrive-keyboard-profile")),
+    )
+    .toBeNull();
   const clearedId = await fastStart(page);
   await page.goto(`/inspect/${clearedId}/test/KEY-01`);
   await expect(page.getByLabel("Keyboard model · US English")).toHaveValue(

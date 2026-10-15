@@ -1,6 +1,8 @@
-# TESTDRIVE 1.1.0-beta.2
+# TESTDRIVE 1.1.0-beta.3
 
 This update makes an inspection easier to start and completes more checks from observed input. One click starts the automatic scan; saving a result takes the user to the next pending check.
+
+Beta 3 corrects the ASUS AI/Copilot key: a received Win + Shift + F23 sequence lights its dedicated key, while shortcut modifiers do not falsely count as independently tested keys. Three visible red Escape dots show exit progress, reset after a pause or another key, and confirm the third press. The browser must receive the shortcut to identify it; Win + Shift alone is insufficient.
 
 - Four manufacturer-sourced US keyboard profiles: ASUS Zenbook DUO UX8406CA, Apple MacBook Air 13-inch M2 (2022), Dell XPS 13 9315, and Lenovo ThinkPad T14 Gen 4. A supported confirmed Windows import selects a matching layout; manual choices are remembered locally and cleared with local data.
 - Explicit keyboard capture with visible active state, per-key press/release progress, triple-Escape, mouse Exit, 60-second inactivity and focus-loss exits.
@@ -14,7 +16,7 @@ Camera/microphone access starts only after the relevant action. Temporary media 
 
 ## Verification
 
-TypeScript, ESLint, all 36 unit tests, the production build and all 17 desktop/mobile-viewport browser workflows passed locally and in CI. All 17 workflows also passed against the public HTTPS app. Public security-policy checks, deep routes, missing-file404 and exact deployed JavaScript/CSS hashes passed. Current results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
+The preceding beta 2 passed TypeScript, ESLint, all 36 unit tests, the production build and all 17 desktop/mobile-viewport browser workflows locally, in CI and against the public HTTPS app. Beta 3 adds a focused AI-key and Escape-progress regression; current execution results and version identities are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
 
 Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 

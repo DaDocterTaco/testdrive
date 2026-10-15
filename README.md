@@ -10,10 +10,10 @@ This repository is the implementation for HACK47: OFFGRID, October 2026. See [th
 
 ## Release access
 
-- [Live app](https://testdrive-offgrid-2026.web.app) — Firebase Hosting, beta `1.1.0-beta.2`.
-- [Public source](https://github.com/DaDocterTaco/testdrive) and [immutable 1.1 source tag](https://github.com/DaDocterTaco/testdrive/tree/v1.1.0-beta.2).
-- [Release verification CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38672436016) — reproducible install, typecheck, lint, 36 unit tests, production build, and 17 desktop/mobile-viewport scenarios.
-- [Current release notes](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.1.0-beta.2). The [earlier beta 3 demonstration](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid) is historical and does not show the 1.1 update.
+- [Live app](https://testdrive-offgrid-2026.web.app) — Firebase Hosting, beta `1.1.0-beta.3`.
+- [Public source](https://github.com/DaDocterTaco/testdrive) and [immutable 1.1 source tag](https://github.com/DaDocterTaco/testdrive/tree/v1.1.0-beta.3).
+- [Release verification record](docs/verification.md) — version-specific local, production and CI results. The suite now includes 37 unit tests and 18 desktop/mobile-viewport scenarios.
+- [Current release notes](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.1.0-beta.3). The [earlier beta 3 demonstration](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.0.0-beta.3-offgrid) is historical and does not show the 1.1 update.
 - Demo recording and Devpost submission status are tracked in the verification record. Do not infer submission from the presence of this repository.
 
 ## Develop

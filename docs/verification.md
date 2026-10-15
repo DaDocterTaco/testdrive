@@ -2,6 +2,12 @@
 
 This file records actual evidence. Checklists and intended behavior are not test results.
 
+## 1.1.0-beta.3 keyboard correction
+
+The beta 3 candidate passed TypeScript, ESLint, all 37 unit tests and the production build. Four affected existing browser scenarios passed: capture defaults and exit paths, confirmed Zenbook import, partial keyboard/report persistence and mobile layout. The new eighteenth scenario passed after the final batching fix: a synthetic Win + Shift + F23 sequence marks Copilot while preserving raw modifier observations without granting independent core-key credit; standalone Shift remains testable. It also verifies Escape dots at 0/1/2/3, timeout and other-key resets, retained exit confirmation, and exported report facts.
+
+The regression first exposed Playwright's unsupported `F23` key-name helper, so the test dispatches explicit browser keyboard events. It then caught a real batched-event metadata issue, corrected by snapshotting shortcut members before queuing the React state update. The final focused scenario passed in 7.2 seconds. Labeled screenshots show two dots while active and three after exit. These are software events, not physical ASUS-key or OS-interception validation. Public deployment and final CI evidence are recorded after publication; the preceding beta 2 results below retain their own identity. No new video is part of this patch.
+
 ## 1.1.0-beta.2 usability release
 
 The deployed implementation is `7521b81ff9584d64bb0d241629ea3923147e916e`, immutable tag `v1.1.0-beta.2`. [Release](https://github.com/DaDocterTaco/testdrive/releases/tag/v1.1.0-beta.2) · [CI run 38672436016](https://github.com/DaDocterTaco/testdrive/actions/runs/38672436016).

@@ -105,7 +105,7 @@ export const DEVICE_PROFILES: DeviceProfile[] = [
           key("AltLeft", "Alt"),
           key("Space", "Space", 5.2),
           key("AltRight", "Alt"),
-          key("Copilot", "Copilot", 1, true),
+          key("Copilot", "Copilot", 1, true, "AI"),
           arrow("ArrowLeft", "←", true),
           arrowStack,
           arrow("ArrowRight", "→", true),

@@ -8,6 +8,7 @@ import {
   testableKeys,
 } from "../../src/devices/catalog";
 import {
+  isCopilotShortcut,
   keyIdentifier,
   nextEscapeSequence,
 } from "../../src/features/tests/keyboardCapture";
@@ -65,6 +66,32 @@ describe("device catalog", () => {
 });
 
 describe("keyboard exit and event identity", () => {
+  it("recognizes the distinctive Copilot shortcut without guessing from its modifiers", () => {
+    const chord = {
+      code: "F23",
+      key: "F23",
+      metaKey: true,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: false,
+    };
+    expect(isCopilotShortcut(chord)).toBe(true);
+    expect(isCopilotShortcut({ ...chord, code: "Unidentified" })).toBe(true);
+    expect(
+      isCopilotShortcut({ ...chord, code: "ShiftLeft", key: "Shift" }),
+    ).toBe(false);
+    expect(isCopilotShortcut({ ...chord, code: "MetaLeft", key: "Meta" })).toBe(
+      false,
+    );
+    expect(
+      isCopilotShortcut({ ...chord, code: "KeyC", key: "c", shiftKey: false }),
+    ).toBe(false);
+    expect(
+      isCopilotShortcut({ ...chord, metaKey: false, shiftKey: false }),
+    ).toBe(false);
+    expect(isCopilotShortcut({ ...chord, ctrlKey: true })).toBe(false);
+    expect(isCopilotShortcut({ ...chord, altKey: true })).toBe(false);
+  });
   it("requires three separate Escape presses, resets on other keys or a gap", () => {
     let sequence = { count: 0, lastAt: 0 };
     sequence = nextEscapeSequence(sequence, "Escape", false, 1000);

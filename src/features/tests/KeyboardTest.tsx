@@ -12,6 +12,8 @@ import { fact, useEvidence } from "./shared";
 import type { ModuleProps } from "./shared";
 import {
   KEYBOARD_IDLE_MS,
+  isCopilotModifier,
+  isCopilotShortcut,
   keyIdentifier,
   nextEscapeSequence,
 } from "./keyboardCapture";
@@ -44,6 +46,16 @@ export function KeyboardTest({
   const [escapeCount, setEscapeCount] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(60);
   const [peakHeld, setPeakHeld] = useState(0);
+  const [copilot, setCopilot] = useState({ presses: 0, released: false });
+  const [copilotDown, setCopilotDown] = useState(false);
+  const [standaloneModifiers, setStandaloneModifiers] = useState<Set<string>>(
+    new Set(),
+  );
+  const [compoundModifiers, setCompoundModifiers] = useState<Set<string>>(
+    new Set(),
+  );
+  const copilotHeld = useRef(false);
+  const copilotMembers = useRef(new Set<string>());
   const shell = useRef<HTMLDivElement>(null);
   const startButton = useRef<HTMLButtonElement>(null);
   const activeRef = useRef(false);
@@ -57,8 +69,12 @@ export function KeyboardTest({
   const keys = flattenKeys(profile);
   const expected = testableKeys(profile);
   const tested = Object.keys(seen);
-  const completed = expected.filter((k) => seen[k.code]?.released).length;
-  const remaining = expected.filter((k) => !seen[k.code]?.released);
+  const keyReleased = (code: string) =>
+    isCopilotModifier(code)
+      ? standaloneModifiers.has(code)
+      : !!seen[code]?.released;
+  const completed = expected.filter((k) => keyReleased(k.code)).length;
+  const remaining = expected.filter((k) => !keyReleased(k.code));
   const complete = completed === expected.length;
 
   const releaseCapture = useCallback(() => {
@@ -76,17 +92,20 @@ export function KeyboardTest({
     ownsFullscreen.current = false;
   }, []);
   const stop = useCallback(
-    (reason: string, interrupted = false) => {
+    (reason: string, interrupted = false, escapeExit = false) => {
       if (!activeRef.current) return;
       activeRef.current = false;
       generation.current += 1;
       releaseCapture();
       heldRef.current.clear();
+      copilotHeld.current = false;
+      copilotMembers.current.clear();
+      setCopilotDown(false);
       setHeld(new Set());
       setActive(false);
       setCapture("Keyboard capture is off");
       setExitReason(reason);
-      setEscapeCount(0);
+      setEscapeCount(escapeExit ? 3 : 0);
       escapeSequence.current = { count: 0, lastAt: 0 };
       if (interrupted) setInterruptions((n) => n + 1);
       // Focus is restored only while the window still owns focus; never steal it back.
@@ -112,6 +131,10 @@ export function KeyboardTest({
     setHeld(new Set());
     heldRef.current.clear();
     setPeakHeld(0);
+    setCopilot({ presses: 0, released: false });
+    setStandaloneModifiers(new Set());
+    setCompoundModifiers(new Set());
+    setEscapeCount(0);
     setLastKey("—");
   }, [profile.id, stop]);
   useEffect(() => {
@@ -126,8 +149,29 @@ export function KeyboardTest({
       event.stopPropagation();
       refresh();
       const code = keyIdentifier(event);
-      setLastKey(event.key === " " ? "Space" : event.key.slice(0, 32));
+      const copilotChord = isCopilotShortcut(event);
+      setLastKey(
+        copilotChord
+          ? "Copilot / AI shortcut"
+          : event.key === " "
+            ? "Space"
+            : event.key.slice(0, 32),
+      );
       heldRef.current.add(code);
+      if (copilotChord) {
+        for (const member of heldRef.current) {
+          if (isCopilotModifier(member)) copilotMembers.current.add(member);
+        }
+        const members = [...copilotMembers.current];
+        setCompoundModifiers((old) => new Set([...old, ...members]));
+        if (!event.repeat && !copilotHeld.current)
+          setCopilot((old) => ({
+            presses: Math.min(100000, old.presses + 1),
+            released: old.released,
+          }));
+        copilotHeld.current = true;
+        setCopilotDown(true);
+      }
       setHeld(new Set(heldRef.current));
       setPeakHeld((n) => Math.max(n, heldRef.current.size));
       if (!event.repeat)
@@ -150,7 +194,11 @@ export function KeyboardTest({
       escapeSequence.current = next;
       setEscapeCount(next.count);
       if (next.count >= 3)
-        stop("Exited after three Escape presses. Your key results are kept.");
+        stop(
+          "Exited after three Escape presses. Your key results are kept.",
+          false,
+          true,
+        );
     };
     const up = (event: KeyboardEvent) => {
       if (!activeRef.current) return;
@@ -158,6 +206,20 @@ export function KeyboardTest({
       event.stopPropagation();
       refresh();
       const code = keyIdentifier(event);
+      if ((code === "F23" || event.key === "F23") && copilotHeld.current) {
+        copilotHeld.current = false;
+        setCopilotDown(false);
+        setCopilot((old) => ({ ...old, released: true }));
+        setLastKey("Copilot / AI shortcut");
+      }
+      if (
+        isCopilotModifier(code) &&
+        heldRef.current.has(code) &&
+        !copilotMembers.current.has(code)
+      ) {
+        setStandaloneModifiers((old) => new Set(old).add(code));
+      }
+      copilotMembers.current.delete(code);
       heldRef.current.delete(code);
       setHeld(new Set(heldRef.current));
       setSeen((old) =>
@@ -332,6 +394,23 @@ export function KeyboardTest({
         ),
         fact("keyboard.held", "Keys held at the last observation", held.size),
         fact(
+          "keyboard.copilot.shortcut_count",
+          "Copilot / AI shortcut events",
+          copilot.presses,
+          "Recognized Windows + Shift + F23 input. This identifies the logical shortcut, not which physical key produced it.",
+        ),
+        fact(
+          "keyboard.copilot.released",
+          "Copilot shortcut release received",
+          copilot.released,
+        ),
+        fact(
+          "keyboard.copilot.modifiers",
+          "Modifier codes also seen in Copilot shortcuts",
+          [...compoundModifiers].join(", ") || "None",
+          "Raw modifier events remain in this report. They count toward core-key coverage only after an independent press and release.",
+        ),
+        fact(
           "keyboard.peak_held",
           "Maximum simultaneous key codes observed",
           peakHeld,
@@ -353,7 +432,16 @@ export function KeyboardTest({
       explanation:
         "Press and release events were received during explicit keyboard capture. Coverage confirms browser input only. Firmware, Fn, reserved OS shortcuts, key feel and intermittent faults need separate assessment.",
     },
-    [seen, held, profile.id, interruptions, peakHeld],
+    [
+      seen,
+      held,
+      profile.id,
+      interruptions,
+      peakHeld,
+      copilot,
+      standaloneModifiers,
+      compoundModifiers,
+    ],
   );
 
   function renderKey(k: KeySpec) {
@@ -367,18 +455,27 @@ export function KeyboardTest({
           {k.stack.map(renderKey)}
         </span>
       );
-    const state = held.has(k.code)
-      ? "pressed"
-      : seen[k.code]?.released
-        ? "released"
-        : "unseen";
+    const state =
+      k.code === "Copilot"
+        ? copilotDown
+          ? "pressed"
+          : copilot.released
+            ? "released"
+            : "unseen"
+        : held.has(k.code) && !copilotMembers.current.has(k.code)
+          ? "pressed"
+          : keyReleased(k.code)
+            ? "released"
+            : compoundModifiers.has(k.code)
+              ? "compound"
+              : "unseen";
     return (
       <span
         key={k.code}
         data-code={k.code}
         data-key-state={state}
-        title={`${k.label}${k.optional ? " · optional/system key" : ""}${state === "released" ? " · press and release received" : ""}`}
-        className={`td-key ${k.optional ? "optional" : ""} ${k.half ? "half" : ""} ${state === "released" ? "seen" : ""} ${state === "pressed" ? "held" : ""}`}
+        title={`${k.label}${k.optional ? " · optional/system key" : ""}${state === "released" ? " · press and release received" : state === "compound" ? " · observed as part of Copilot; press this key separately to test it" : ""}`}
+        className={`td-key ${k.optional ? "optional" : ""} ${k.half ? "half" : ""} ${state === "released" ? "seen" : ""} ${state === "compound" ? "compound" : ""} ${state === "pressed" ? "held" : ""}`}
         style={{ flex: k.width ?? 1 }}
       >
         {k.secondary && <small>{k.secondary}</small>}
@@ -462,6 +559,27 @@ export function KeyboardTest({
             </button>
           )}
         </div>
+        {(active || escapeCount === 3) && (
+          <div
+            className="td-escape-feedback"
+            aria-label={`Escape progress: ${escapeCount} of 3`}
+          >
+            <span>
+              {escapeCount === 3
+                ? "Keyboard test exited"
+                : "Press Esc 3 times to exit"}
+            </span>
+            <span className="td-escape-dots" aria-hidden="true">
+              {[1, 2, 3].map((n) => (
+                <i
+                  key={n}
+                  className="td-escape-dot"
+                  data-filled={escapeCount >= n ? "true" : "false"}
+                />
+              ))}
+            </span>
+          </div>
+        )}
         {active ? (
           <div className="td-capture-instructions">
             <LockKeyhole size={18} />
@@ -499,6 +617,13 @@ export function KeyboardTest({
             Windows/Command and reserved OS shortcuts may still open. Fn and
             shaded keys are optional; try Fn + F1–F12 to send function-key
             events. Your browser may exit on the first Escape.
+          </p>
+        )}
+        {keys.some((k) => k.code === "Copilot") && (
+          <p className="td-copilot-note" role="status">
+            {copilot.presses > 0
+              ? "Copilot / AI shortcut recognized. Its Win + Shift events are kept separately; press those physical keys on their own to test them."
+              : "Your AI key is tested as one Copilot shortcut. Windows may intercept it; if it stays unmarked, it remains unverified."}
           </p>
         )}
         <div

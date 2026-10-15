@@ -99,7 +99,10 @@ export async function evidence(
       banner.textContent = label;
       banner.style.cssText =
         "position:relative;padding:7px 12px;background:#132b29;color:white;font:11px/1.4 system-ui;text-align:center;pointer-events:none";
-      document.body.prepend(banner);
+      (
+        document.querySelector(".td-keyboard-capture.is-capturing") ??
+        document.body
+      ).prepend(banner);
       window.scrollTo(0, 0);
     },
     production ? `Production HTTPS · ${text}` : text,

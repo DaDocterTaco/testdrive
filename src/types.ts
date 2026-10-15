@@ -92,4 +92,4 @@ export interface TestDefinition {
   group: "performance" | "input" | "media" | "display";
   duration: string;
 }
-export const APP_VERSION = "1.1.0-beta.2";
+export const APP_VERSION = "1.1.0-beta.3";
