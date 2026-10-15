@@ -18,7 +18,7 @@ Camera/microphone access starts only after the relevant action. Temporary media 
 
 ## Verification
 
-The preceding beta 3 passed TypeScript, ESLint, all 37 unit tests, the production build and all 18 browser scenarios in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38673570544). Beta 4 adds a nineteenth scenario for explicit unknown-keyboard confirmation; version-specific results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
+Beta 4 passed TypeScript, ESLint, all 37 unit tests and the production build. All 19 browser workflows passed in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38674464362). The six affected keyboard/mobile workflows and the complete buyer/report lifecycle also passed against the live HTTPS app. Exact deployed asset hashes, routes, headers and browser security checks passed. Source identities and prior release results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
 
 Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 
