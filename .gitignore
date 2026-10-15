@@ -1,0 +1,45 @@
+# Dependencies, build output, local caches
+node_modules/
+dist/
+.vite/
+.npm-cache/
+coverage/
+playwright-report/
+test-results/
+.firebase/
+firebase-debug.log*
+ui-debug.log*
+*.tsbuildinfo
+
+# Credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+credentials*.json
+.DS_Store
+Thumbs.db
+
+# Personal inspections, raw reports, recordings, and unsanitized evidence
+private/
+raw-reports/
+personal-reports/
+recordings/
+screenshots-private/
+TESTDRIVE_SOURCE_OF_TRUTH.md
+*.msinfo32.txt
+*.nfo
+*.spx
+*.webm
+*.wav
+*.mp4
+
+# Local agent and editor scratch files
+.codex/
+.agents/
+.vscode/
+tmp/
+*.log

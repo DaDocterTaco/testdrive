@@ -1,0 +1,9 @@
+SYNTHETIC EXAMPLE — this describes no physical device.
+OS Name	Microsoft Windows 11 Home
+Version	10.0.26100 Build 26100
+System Manufacturer	Example Devices
+System Model	Example Notebook 14
+Processor	11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz, 2803 Mhz, 4 Core(s), 8 Logical Processor(s)
+Installed Physical Memory (RAM)	8.00 GB
+Total Physical Memory	7.72 GB
+Available Physical Memory	3.11 GB
