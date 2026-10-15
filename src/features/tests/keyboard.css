@@ -273,6 +273,60 @@
   align-items: center;
   margin: 20px 0 14px;
 }
+.td-extra-keys {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #506956;
+}
+.td-extra-keys > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+.td-extra-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 9px;
+  border: 1px solid #c7d2c6;
+  border-radius: 7px;
+  background: #fff;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.td-extra-key.released {
+  background: #cce6cd;
+  border-color: #9dc39f;
+  color: #16482b;
+}
+.td-extra-key.pressed {
+  background: #207e50;
+  color: #fff;
+}
+.td-generic-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #c9dec8;
+  border-radius: 14px;
+  background: #eaf3e9;
+}
+.td-generic-confirm > div {
+  flex: 1 1 240px;
+}
+.td-generic-confirm p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #506956;
+  margin: 5px 0 0;
+}
+.td-generic-confirm > p {
+  width: 100%;
+}
 .td-keyboard-progress > div:first-child {
   display: flex;
   flex-direction: column;

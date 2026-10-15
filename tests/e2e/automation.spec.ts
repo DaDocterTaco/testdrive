@@ -293,6 +293,97 @@ test("ASUS Copilot chord credits the AI key and Escape dots show, reset and conf
   ).toBe(3);
 });
 
+test("unknown keyboard accepts extra keys and explicit confirmation without inventing full layout coverage", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(Element.prototype, "requestFullscreen", {
+      configurable: true,
+      value: async () => {
+        throw new DOMException("Software fallback test", "NotAllowedError");
+      },
+    });
+  });
+  const id = await fastStart(page);
+  await page.goto(`/inspect/${id}/test/KEY-01`);
+  const confirmation = page.getByRole("button", {
+    name: "All my keys responded",
+    exact: true,
+  });
+  const start = page.getByRole("button", {
+    name: "Start keyboard test",
+    exact: true,
+  });
+  const exit = page.getByRole("button", {
+    name: "Exit keyboard test",
+    exact: true,
+  });
+  const save = page.getByRole("button", {
+    name: /^Save & (?:next check|review)/,
+  });
+  await expect(page.getByLabel("Keyboard model · US English")).toHaveValue(
+    "generic-ansi-us",
+  );
+  await expect(confirmation).toBeDisabled();
+  await expect(save).toBeDisabled();
+  await start.click();
+  await page.keyboard.press("a");
+  await page.keyboard.press("b");
+  await page.evaluate(() => {
+    for (const type of ["keydown", "keyup"])
+      window.dispatchEvent(
+        new KeyboardEvent(type, {
+          code: "Numpad1",
+          key: "1",
+          location: 3,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+  });
+  await expect(page.locator('[data-code="Numpad1"]')).toHaveAttribute(
+    "data-key-state",
+    "released",
+  );
+  await expect(confirmation).toBeHidden();
+  await expect(save).toBeDisabled();
+  await exit.click();
+  await expect(confirmation).toBeEnabled();
+  await expect(save).toBeDisabled();
+  await confirmation.click();
+  await expect(save).toBeEnabled();
+  // Starting another capture invalidates the prior human confirmation.
+  await start.click();
+  await expect(save).toBeDisabled();
+  await page.keyboard.press("c");
+  await exit.click();
+  await expect(save).toBeDisabled();
+  await confirmation.click();
+  await expect(save).toBeEnabled();
+  await evidence(
+    page,
+    "unknown-keyboard-explicit-confirmation-software-test.png",
+    "Synthetic unknown keyboard · extra numpad event and explicit user confirmation · no inferred complete layout",
+  );
+  const report = await saveAndExport(page, id);
+  const keyboard = report.inspection.attempts.find(
+    (attempt) => attempt.testId === "KEY-01",
+  )!;
+  expect(keyboard.humanAnswer).toBe("looks_good");
+  expect(keyboard.finding).toBe("observed");
+  expect(
+    keyboard.facts.find((fact) => fact.key === "human.answer"),
+  ).toMatchObject({ source: "user_confirmed" });
+  expect(
+    keyboard.facts.find((fact) => fact.key === "keyboard.key.Numpad1")?.value,
+  ).toContain("release received");
+  expect(
+    keyboard.facts.some((fact) =>
+      ["keyboard.core_total", "keyboard.untested"].includes(fact.key),
+    ),
+  ).toBe(false);
+});
+
 test("pointer challenge automatically verifies each required action and excludes touch", async ({
   page,
 }) => {

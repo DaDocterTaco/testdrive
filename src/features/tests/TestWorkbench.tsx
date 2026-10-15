@@ -299,6 +299,7 @@ function TestSession({
         onChange={receive}
         profileId={profileId}
         onProfileChange={onProfileChange}
+        onConfirmAssessment={setAnswer}
       />
       {evidence.automatic?.complete && !evidence.status && (
         <div

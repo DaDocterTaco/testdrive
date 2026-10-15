@@ -13,6 +13,7 @@ export interface ModuleProps {
   onChange: (evidence: Evidence) => void;
   profileId?: string;
   onProfileChange?: (id: string) => void;
+  onConfirmAssessment?: (answer: "looks_good" | undefined) => void;
 }
 export const uid = () =>
   globalThis.crypto?.randomUUID?.() ??

@@ -2,6 +2,10 @@
 
 This file records actual evidence. Checklists and intended behavior are not test results.
 
+## 1.1.0-beta.4 unknown-keyboard confirmation
+
+The candidate passed `npm run check`: TypeScript, ESLint, all 37 unit tests and the production build. All six affected keyboard/mobile workflows passed locally in 46.7 seconds. The new nineteenth scenario verifies extra Numpad1 input, no confirmation before input or during capture, explicit confirmation before saving, invalidation on a new capture, and an exported `user_confirmed` assessment without invented core-key totals. The model-specific Copilot path, Escape exits, confirmed model import, partial progress and mobile layout also passed. Labeled screenshots are software evidence; physical keyboards remain unverified. Public and CI results are recorded after publication, and prior release results below retain their identities.
+
 ## 1.1.0-beta.3 keyboard correction
 
 The beta 3 candidate passed TypeScript, ESLint, all 37 unit tests and the production build. Four affected existing browser scenarios passed: capture defaults and exit paths, confirmed Zenbook import, partial keyboard/report persistence and mobile layout. The new eighteenth scenario passed after the final batching fix: a synthetic Win + Shift + F23 sequence marks Copilot while preserving raw modifier observations without granting independent core-key credit; standalone Shift remains testable. It also verifies Escape dots at 0/1/2/3, timeout and other-key resets, retained exit confirmation, and exported report facts.

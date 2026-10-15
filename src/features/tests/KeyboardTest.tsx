@@ -30,12 +30,15 @@ export function KeyboardTest({
   onChange,
   profileId,
   onProfileChange,
+  onConfirmAssessment,
 }: ModuleProps) {
   const [localProfile, setLocalProfile] = useState(
     profileId ?? GENERIC_KEYBOARD_PROFILE.id,
   );
   const profile =
     getDeviceProfile(profileId ?? localProfile) ?? GENERIC_KEYBOARD_PROFILE;
+  const generic = profile.id === GENERIC_KEYBOARD_PROFILE.id;
+  const [genericConfirmed, setGenericConfirmed] = useState(false);
   const [seen, setSeen] = useState<Record<string, KeyObservation>>({});
   const [held, setHeld] = useState<Set<string>>(new Set());
   const [lastKey, setLastKey] = useState("—");
@@ -75,7 +78,12 @@ export function KeyboardTest({
       : !!seen[code]?.released;
   const completed = expected.filter((k) => keyReleased(k.code)).length;
   const remaining = expected.filter((k) => !keyReleased(k.code));
-  const complete = completed === expected.length;
+  const complete = !generic && completed === expected.length;
+  const responses = tested.filter((code) => keyReleased(code)).length;
+  const extraCodes = tested.filter(
+    (code) => !keys.some((key) => key.code === code),
+  );
+  const canConfirmGeneric = responses > 0 && held.size === 0 && !active;
 
   const releaseCapture = useCallback(() => {
     try {
@@ -126,6 +134,8 @@ export function KeyboardTest({
   useEffect(() => {
     if (lastProfile.current === profile.id) return;
     lastProfile.current = profile.id;
+    setGenericConfirmed(false);
+    onConfirmAssessment?.(undefined);
     stop("Keyboard changed. Start again to test this layout.");
     setSeen({});
     setHeld(new Set());
@@ -136,7 +146,7 @@ export function KeyboardTest({
     setCompoundModifiers(new Set());
     setEscapeCount(0);
     setLastKey("—");
-  }, [profile.id, stop]);
+  }, [profile.id, stop, onConfirmAssessment]);
   useEffect(() => {
     if (!active) return;
     const refresh = () => {
@@ -285,6 +295,8 @@ export function KeyboardTest({
 
   async function start() {
     if (activeRef.current) return;
+    setGenericConfirmed(false);
+    if (generic) onConfirmAssessment?.(undefined);
     const current = ++generation.current;
     activeRef.current = true;
     deadline.current = Date.now() + KEYBOARD_IDLE_MS;
@@ -337,13 +349,15 @@ export function KeyboardTest({
   useEvidence(
     onChange,
     {
-      ready: tested.length > 0,
-      automatic: {
-        complete,
-        summary: complete
-          ? `All ${expected.length} core keys sent press and release events.`
-          : `${completed} of ${expected.length} core keys pressed and released.`,
-      },
+      ready: generic ? canConfirmGeneric : tested.length > 0,
+      automatic: generic
+        ? undefined
+        : {
+            complete,
+            summary: complete
+              ? `All ${expected.length} core keys sent press and release events.`
+              : `${completed} of ${expected.length} core keys pressed and released.`,
+          },
       facts: [
         fact(
           "keyboard.layout",
@@ -375,23 +389,34 @@ export function KeyboardTest({
           "Key codes with a release event",
           Object.values(seen).filter((k) => k.released).length,
         ),
-        fact(
-          "keyboard.core_complete",
-          "Core keys pressed and released",
-          completed,
-        ),
-        fact(
-          "keyboard.core_total",
-          "Core keys in selected reference",
-          expected.length,
-          "Fn, system, power, screenshot and F-row keys are optional because their events may be intercepted.",
-        ),
-        fact(
-          "keyboard.untested",
-          "Core keys not yet pressed and released",
-          remaining.length,
-          "Untested keys are not automatically defective.",
-        ),
+        ...(!generic
+          ? [
+              fact(
+                "keyboard.core_complete",
+                "Core keys pressed and released",
+                completed,
+              ),
+              fact(
+                "keyboard.core_total",
+                "Core keys in selected reference",
+                expected.length,
+                "Fn, system, power, screenshot and F-row keys are optional because their events may be intercepted.",
+              ),
+              fact(
+                "keyboard.untested",
+                "Core keys not yet pressed and released",
+                remaining.length,
+                "Untested keys are not automatically defective.",
+              ),
+            ]
+          : [
+              fact(
+                "keyboard.response_count",
+                "Distinct key responses pressed and released",
+                responses,
+                "Observed browser input only. The reference drawing does not establish which physical keys this keyboard has.",
+              ),
+            ]),
         fact("keyboard.held", "Keys held at the last observation", held.size),
         fact(
           "keyboard.copilot.shortcut_count",
@@ -441,6 +466,7 @@ export function KeyboardTest({
       copilot,
       standaloneModifiers,
       compoundModifiers,
+      active,
     ],
   );
 
@@ -511,10 +537,11 @@ export function KeyboardTest({
       <p className="td-help">
         Your layout choice is remembered in this browser.
       </p>
-      {profile.id === GENERIC_KEYBOARD_PROFILE.id && (
+      {generic && (
         <p className="td-help">
-          Choose your laptop above for matching key positions, or use this US
-          reference for another keyboard.
+          This drawing is a reference, not a list of keys your keyboard must
+          have. Press every physical key on your keyboard. Extra keys appear
+          below the drawing. Then exit and confirm that all your keys responded.
         </p>
       )}
       <div
@@ -639,14 +666,45 @@ export function KeyboardTest({
             </div>
           ))}
         </div>
+        {generic && extraCodes.length > 0 && (
+          <div className="td-extra-keys" aria-label="Additional key responses">
+            <strong>Additional key responses</strong>
+            <div>
+              {extraCodes.map((code) => {
+                const state = held.has(code)
+                  ? "pressed"
+                  : keyReleased(code)
+                    ? "released"
+                    : "unseen";
+                return (
+                  <span
+                    key={code}
+                    className={`td-extra-key ${state}`}
+                    data-code={code}
+                    data-key-state={state}
+                    title={code}
+                  >
+                    {state === "released" && <Check size={13} />}
+                    {code.startsWith("Unidentified-") ? "Unmapped key" : code}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="td-keyboard-progress">
           <div>
             <strong>
-              {completed} <span>/ {expected.length}</span>
+              {generic ? responses : completed}{" "}
+              {!generic && <span>/ {expected.length}</span>}
             </strong>
-            <span>core keys pressed + released</span>
+            <span>
+              {generic
+                ? "key responses pressed + released"
+                : "core keys pressed + released"}
+            </span>
           </div>
-          <progress value={completed} max={expected.length} />
+          {!generic && <progress value={completed} max={expected.length} />}
           <div className="td-key-legend">
             <span>
               <i />
@@ -688,19 +746,47 @@ export function KeyboardTest({
       </div>
       {!active && (
         <>
-          <details className="td-keyboard-details">
-            <summary>
-              {remaining.length} core keys still need a press and release
-            </summary>
-            <p>
-              {remaining.map((k) => k.label).join(", ") ||
-                "All core keys received."}
-            </p>
-            <p>
-              {keys.filter((k) => k.optional).length} shaded keys are optional.
-              A missing event may be intercepted by your browser or system.
-            </p>
-          </details>
+          {generic ? (
+            <div className="td-generic-confirm">
+              <div>
+                <strong>Finished testing the keys you have?</strong>
+                <p>
+                  Confirm only after you pressed every physical key and saw each
+                  respond. Unused positions in the reference can stay blank.
+                </p>
+              </div>
+              <button
+                className="primary"
+                disabled={!canConfirmGeneric || genericConfirmed}
+                onClick={() => {
+                  setGenericConfirmed(true);
+                  onConfirmAssessment?.("looks_good");
+                }}
+              >
+                All my keys responded
+              </button>
+              {genericConfirmed && (
+                <p role="status">
+                  Your confirmation is ready. Save below to continue.
+                </p>
+              )}
+            </div>
+          ) : (
+            <details className="td-keyboard-details">
+              <summary>
+                {remaining.length} core keys still need a press and release
+              </summary>
+              <p>
+                {remaining.map((k) => k.label).join(", ") ||
+                  "All core keys received."}
+              </p>
+              <p>
+                {keys.filter((k) => k.optional).length} shaded keys are
+                optional. A missing event may be intercepted by your browser or
+                system.
+              </p>
+            </details>
+          )}
           <p className="td-help">{profile.keyboard.note}</p>
         </>
       )}

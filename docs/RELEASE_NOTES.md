@@ -1,6 +1,8 @@
-# TESTDRIVE 1.1.0-beta.3
+# TESTDRIVE 1.1.0-beta.4
 
 This update makes an inspection easier to start and completes more checks from observed input. One click starts the automatic scan; saving a result takes the user to the next pending check.
+
+Beta 4 makes an unknown keyboard easier to finish. It counts received key responses, shows extra keys such as a number pad, and lets the user choose **All my keys responded** after leaving capture. This is recorded as explicit user confirmation. A generic reference never invents a required physical key count or automatic full-keyboard coverage, and starting another capture clears the confirmation. Known laptop layouts keep their existing automatic coverage checks.
 
 Beta 3 corrects the ASUS AI/Copilot key: a received Win + Shift + F23 sequence lights its dedicated key, while shortcut modifiers do not falsely count as independently tested keys. Three visible red Escape dots show exit progress, reset after a pause or another key, and confirm the third press. The browser must receive the shortcut to identify it; Win + Shift alone is insufficient.
 
@@ -16,7 +18,7 @@ Camera/microphone access starts only after the relevant action. Temporary media 
 
 ## Verification
 
-Beta 3 passed TypeScript, ESLint, all 37 unit tests and the production build. All 18 desktop/mobile-viewport scenarios passed in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38673570544); all five affected keyboard/mobile scenarios also passed against the public HTTPS app. Public asset hashes, routes, headers and browser security checks passed. The preceding beta 2's full 17-case public run remains separately recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
+The preceding beta 3 passed TypeScript, ESLint, all 37 unit tests, the production build and all 18 browser scenarios in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38673570544). Beta 4 adds a nineteenth scenario for explicit unknown-keyboard confirmation; version-specific results are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
 
 Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 
