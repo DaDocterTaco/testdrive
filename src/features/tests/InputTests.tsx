@@ -129,6 +129,17 @@ const labels: Record<string, string> = {
   Space: "Space",
 };
 const expected = rows.flat();
+function keyIdentifier(event: ReactKeyboardEvent) {
+  if (event.code) return event.code;
+  // Key values can contain punctuation or Unicode. Encode them into a bounded
+  // schema-safe identifier without pretending they identify a physical key.
+  return `Unidentified-${
+    Array.from(event.key)
+      .slice(0, 12)
+      .map((c) => c.codePointAt(0)!.toString(16))
+      .join("-") || "unknown"
+  }`;
+}
 
 export function KeyboardTest({ onChange }: ModuleProps) {
   const [layout, setLayout] = useState("ansi");
@@ -156,7 +167,13 @@ export function KeyboardTest({ onChange }: ModuleProps) {
         fact(
           "keyboard.distinct",
           "Distinct physical key codes received",
-          tested.length,
+          tested.filter((code) => !code.startsWith("Unidentified-")).length,
+        ),
+        fact(
+          "keyboard.fallbacks",
+          "Distinct key values without physical codes",
+          tested.filter((code) => code.startsWith("Unidentified-")).length,
+          "These events do not identify a physical key position.",
         ),
         fact(
           "keyboard.release_count",
@@ -189,7 +206,7 @@ export function KeyboardTest({ onChange }: ModuleProps) {
     [seen, held, layout, blurs],
   );
   function keyDown(event: ReactKeyboardEvent) {
-    const code = event.code || `Unidentified:${event.key}`;
+    const code = keyIdentifier(event);
     setCharacter(event.key === " " ? "Space" : event.key);
     setHeld((old) => new Set(old).add(code));
     if (!event.repeat)
@@ -208,7 +225,7 @@ export function KeyboardTest({ onChange }: ModuleProps) {
       event.preventDefault();
   }
   function keyUp(event: ReactKeyboardEvent) {
-    const code = event.code || `Unidentified:${event.key}`;
+    const code = keyIdentifier(event);
     setHeld((old) => {
       const next = new Set(old);
       next.delete(code);

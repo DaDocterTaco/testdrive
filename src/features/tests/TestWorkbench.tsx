@@ -105,7 +105,7 @@ function TestSession({
       return {
         id: attemptId.current,
         testId,
-        testVersion: "1.0.0",
+        testVersion: testId === "KEY-01" ? "1.0.1" : "1.0.0",
         status: status === "running" ? (current.status ?? status) : status,
         startedAt: started.current,
         ...(status === "interrupted"
@@ -221,7 +221,7 @@ function TestSession({
     onComplete({
       id: attemptId.current,
       testId,
-      testVersion: "1.0.0",
+      testVersion: testId === "KEY-01" ? "1.0.1" : "1.0.0",
       status: actualStatus,
       startedAt: started.current,
       endedAt: new Date().toISOString(),

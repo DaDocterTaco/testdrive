@@ -56,7 +56,8 @@ export async function evidence(
   name: string,
   text: string,
 ): Promise<void> {
-  const target = path.resolve("docs/evidence");
+  const production = page.url().startsWith("https://");
+  const target = path.resolve("docs/evidence", production ? "production" : ".");
   await mkdir(target, { recursive: true });
   await page.evaluate((label) => {
     const banner = document.createElement("div");
@@ -66,7 +67,7 @@ export async function evidence(
       "position:relative;padding:7px 12px;background:#132b29;color:white;font:11px/1.4 system-ui;text-align:center;pointer-events:none";
     document.body.prepend(banner);
     window.scrollTo(0, 0);
-  }, text);
+  }, production ? `Production HTTPS · ${text}` : text);
   await page.screenshot({
     path: path.join(target, name),
     fullPage: true,

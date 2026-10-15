@@ -174,6 +174,18 @@ test("buyer lifecycle preserves evidence, RAM difference, revisions, export, ref
     "desktop-report-print-software-test.png",
     "PRINT CSS software check · synthetic inspection · not physical hardware validation",
   );
+  if (process.env.TD_E2E_PDF === "1") {
+    await page.pdf({
+      path: path.resolve("docs/evidence", page.url().startsWith("https://") ? "production" : ".", "synthetic-browser-print-software-test.pdf"),
+      format: "Letter",
+      printBackground: true,
+      preferCSSPageSize: true,
+      displayHeaderFooter: true,
+      headerTemplate: '<div style="width:100%;font-size:8px;text-align:center;color:#444">TESTDRIVE - SYNTHETIC BROWSER PDF SOFTWARE TEST - no physical hardware validation</div>',
+      footerTemplate: '<div style="width:100%;font-size:8px;text-align:center;color:#444">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
+      margin: { top: "0.45in", bottom: "0.45in", left: "0.35in", right: "0.35in" },
+    });
+  }
   await page.emulateMedia({ media: "screen" });
   const url = page.url();
   await page.reload();
@@ -407,6 +419,21 @@ test("partial keyboard observations survive sidebar exit and refresh, with disti
   expect(
     attempts[0].facts.filter((f) => f.key.startsWith("keyboard.key.")),
   ).toHaveLength(2);
+  await page.goto(`/inspect/${id}/test/KEY-01`);
+  const retest = page.getByRole("group", { name: /^Keyboard test area/ });
+  await retest.dispatchEvent("keydown", { key: "é", code: "", bubbles: true });
+  await retest.dispatchEvent("keyup", { key: "é", code: "", bubbles: true });
+  await expect(page.getByText("1 keys received", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Not sure" }).click();
+  await page.getByRole("button", { name: "Save result" }).click();
+  const updated = await finishReport(page, id);
+  const retakes = updated.inspection.attempts.filter((attempt) => attempt.testId === "KEY-01");
+  expect(retakes).toHaveLength(2);
+  const fallback = retakes.at(-1)!;
+  expect(fallback.facts.find((f) => f.key === "keyboard.distinct")?.value).toBe(0);
+  expect(fallback.facts.find((f) => f.key === "keyboard.fallbacks")?.value).toBe(1);
+  expect(fallback.facts.filter((f) => f.key.startsWith("keyboard.key.")).map((f) => f.key)).toEqual(["keyboard.key.Unidentified-e9"]);
+  expect(fallback.finding).toBe("not_assessed");
 });
 
 test("ordinary keyboard navigation can start an inspection and missing routes recover", async ({
