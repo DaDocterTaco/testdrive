@@ -1,8 +1,8 @@
 {
-  "testedAtUTC": "2026-10-15T02:40:46.855Z",
+  "testedAtUTC": "2026-10-15T02:56:05.550Z",
   "origin": "https://testdrive-offgrid-2026.web.app",
-  "version": "1.1.0-beta.2",
-  "implementation": "7521b81ff9584d64bb0d241629ea3923147e916e",
+  "version": "1.1.0-beta.3",
+  "implementation": "461c7568f1ad88e466956b3195e33699b56df97d",
   "scope": "Production HTTP and exact static artifact verification; no physical hardware validation.",
   "results": [
     {
@@ -42,18 +42,18 @@
       "cacheControl": "no-cache"
     },
     {
-      "route": "/assets/index-CWpDB626.js",
+      "route": "/assets/index-DptsDrdr.js",
       "status": 200,
       "type": "text/javascript; charset=utf-8",
       "cacheControl": "public,max-age=31536000,immutable",
-      "sha256": "83c26d33c627f83146dd3dfde72d37c5bf5f7173634f11f2992192b15706733e"
+      "sha256": "a1dc8a9b45c960ad0a67e18500e116a2e671d54b72481261f3561d7228974597"
     },
     {
-      "route": "/assets/index-BIyFpMhC.css",
+      "route": "/assets/index-BiQn28eF.css",
       "status": 200,
       "type": "text/css; charset=utf-8",
       "cacheControl": "public,max-age=31536000,immutable",
-      "sha256": "49e8d8fa27dc634712332b5d41f8c5e9b21be191ff05f7fc7e5e1294e4c934fa"
+      "sha256": "2ede4a374f349c504b9bb770c9ccecea95779adb587d205b1b2e9e439e47e956"
     }
   ]
 }

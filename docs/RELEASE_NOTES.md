@@ -16,7 +16,7 @@ Camera/microphone access starts only after the relevant action. Temporary media 
 
 ## Verification
 
-The preceding beta 2 passed TypeScript, ESLint, all 36 unit tests, the production build and all 17 desktop/mobile-viewport browser workflows locally, in CI and against the public HTTPS app. Beta 3 adds a focused AI-key and Escape-progress regression; current execution results and version identities are recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
+Beta 3 passed TypeScript, ESLint, all 37 unit tests and the production build. All 18 desktop/mobile-viewport scenarios passed in [CI](https://github.com/DaDocterTaco/testdrive/actions/runs/38673570544); all five affected keyboard/mobile scenarios also passed against the public HTTPS app. Public asset hashes, routes, headers and browser security checks passed. The preceding beta 2's full 17-case public run remains separately recorded in [verification.md](verification.md). Full Chromium is used for media tests: the stripped Playwright headless shell crashes in its experimental speech availability API even without this app, while the full browser returns the supported local-language status safely.
 
 Software input, synthetic camera/audio streams, and mobile viewport emulation do not establish physical hardware quality. Physical iPhone/Safari and actual camera/microphone/input hardware still require device testing.
 
