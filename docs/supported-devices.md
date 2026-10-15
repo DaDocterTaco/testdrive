@@ -2,6 +2,8 @@
 
 TESTDRIVE is a browser beta. Support is capability-based: unavailable or denied APIs are reported honestly. Physical-device evidence is recorded separately from automated checks and responsive emulation.
 
+The 1.2 UX release adds tested desktop (1440px), tablet (768px) and phone (390px/320px) layouts, a browser-sourced battery/website-quota overview, and native/full-viewport touch and display checks. Touch controls can move to expose covered cells; exit retains the observed grid. Website quota is not physical storage capacity. Native fullscreen and OS key handling remain browser-dependent. Current local, public and CI results are recorded in [verification.md](verification.md); older evidence below is historical.
+
 ## Intended browser coverage
 
 | Environment                    | Intended usable path                                                            | Restrictions                                                                               |
