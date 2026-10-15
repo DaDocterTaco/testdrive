@@ -2948,6 +2948,19 @@ textarea {
   }
 }
 @media print {
+  .result-item {
+    break-inside: auto;
+  }
+  .result-title,
+  .panel-title,
+  .evidence summary,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+  .fact-row {
+    break-inside: avoid;
+  }
   @page {
     size: A4;
     margin: 15mm;
@@ -3024,7 +3037,7 @@ textarea {
     font-size: 12pt;
   }
   .result-item {
-    break-inside: avoid;
+    break-inside: auto;
     border-color: #ddd;
     padding: 13px 0;
   }

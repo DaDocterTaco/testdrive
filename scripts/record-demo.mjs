@@ -64,9 +64,18 @@ async function show(locator) {
   await pause(500);
 }
 async function moveTo(locator) {
-  await locator.scrollIntoViewIfNeeded();
+  await locator.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
   const box = await locator.boundingBox();
   if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 12 });
+}
+async function clickVisibleControl(locator) {
+  // Use a real pointer event at the visible control. This avoids the runner's
+  // repeated actionability retries when a below-fold control is hover-shifted.
+  await moveTo(locator);
+  await pause(250);
+  const box = await locator.boundingBox();
+  assert.ok(box, 'Expected a rendered control');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 async function type(locator, text) {
   await locator.click();
@@ -95,7 +104,8 @@ try {
   await page.getByRole('button', { name: 'Run quick scan', exact: true }).click();
   await page.getByText('Your quick scan is saved.', { exact: true }).waitFor({ timeout: 25_000 });
   await pause();
-  await page.getByRole('button', { name: 'Continue to hands-on checks' }).click();
+  await clickVisibleControl(page.getByRole('button', { name: 'Continue to hands-on checks' }));
+  await page.waitForURL(/\/inspect\/[^/]+\/tests$/);
   await chapter('04 · Measurements and hands-on checks stay distinct');
   await pause(2000);
 

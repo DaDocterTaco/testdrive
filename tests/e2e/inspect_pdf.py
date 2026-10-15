@@ -23,6 +23,9 @@ for expected in required:
 assert "Export JSON" not in text
 assert "Inspect another device" not in text
 assert len(reader.pages) >= 2, "Expected a genuinely paginated full inspection"
+for page_text in texts:
+    if "Inspection findings" in page_text:
+        assert "Device profile" in page_text, "Inspection findings heading is orphaned from the first result"
 
 page_records = []
 with pdfplumber.open(pdf) as document:
@@ -33,6 +36,8 @@ with pdfplumber.open(pdf) as document:
         assert not outside, f"Text outside page {index + 1}: {outside}"
         page_records.append({"page": index + 1, "widthPoints": page.width, "heightPoints": page.height, "words": len(words), "topPoints": round(min(word["top"] for word in words), 2), "bottomPoints": round(max(word["bottom"] for word in words), 2), "firstWords": " ".join(word["text"] for word in words[:18]), "lastWords": " ".join(word["text"] for word in words[-18:])})
 
+for previous_page in target.glob("page-*.png"):
+    previous_page.unlink()
 subprocess.run([str(poppler), "-r", "110", "-png", str(pdf), str(target / "page")], check=True)
 images = []
 for file in sorted(target.glob("page-*.png")):
